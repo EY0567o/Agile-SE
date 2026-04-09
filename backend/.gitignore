@@ -1,2 +1,5 @@
 node_modules/
 .env
+codebuddy.db
+codebuddy.db-shm
+codebuddy.db-wal

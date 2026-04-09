@@ -8,7 +8,14 @@
       "Bash(find '/c/Users/engin/Downloads/Code Test_Agile SE' -type f -name *.jsx -o -name *.js -o -name *.tsx -o -name *.ts)",
       "Bash(java -version)",
       "WebSearch",
-      "WebFetch(domain:support.claude.com)"
+      "WebFetch(domain:support.claude.com)",
+      "Bash(node server.js)",
+      "Bash(curl -s http://localhost:3001/api/health)",
+      "Bash(curl -s -X POST http://localhost:3001/api/register -H \"Content-Type: application/json\" -d '{\"username\":\"testuser99\",\"password\":\"test1234\"}')",
+      "Bash(curl -s -X POST http://localhost:3001/api/login -H \"Content-Type: application/json\" -d '{\"username\":\"testuser99\",\"password\":\"test1234\"}')",
+      "Bash(curl -s http://localhost:3001/api/progress -H 'Authorization: Bearer 74a046a7-291e-4128-a5ac-f8ce6b16b241')",
+      "Bash(curl -s -X POST http://localhost:3001/api/run -H 'Authorization: Bearer 74a046a7-291e-4128-a5ac-f8ce6b16b241' -H 'Content-Type: application/json' -d '{\"code\":\"public class Main { public static void main\\(String[] args\\) { System.out.println\\(\\\\\"Hello CodeBuddy!\\\\\"\\); }}\"}')",
+      "Bash(curl -s -X DELETE http://localhost:3001/api/account -H 'Authorization: Bearer 74a046a7-291e-4128-a5ac-f8ce6b16b241')"
     ]
   }
 }
