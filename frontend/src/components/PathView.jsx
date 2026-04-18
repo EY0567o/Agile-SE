@@ -4,7 +4,7 @@
 //  Stellt alle 10 Aufgaben aus tasks.js untereinander dar – inspiriert
 //  von Duolingo's Lernpfad. Visuelle Logik:
 //   - Erledigte Aufgaben: grüner Haken, weichgezeichnet
-//   - Aktuelle Aufgabe (next): hervorgehoben mit "Starten →"
+//   - Aktuelle Aufgabe (next): hervorgehoben mit "Starten"-Pill
 //   - Gesperrte Aufgaben: grau, mit 🔒, nicht klickbar
 //   - Zickzack: jede 2. Aufgabe ist horizontal versetzt (-60 / +60)
 //
@@ -62,10 +62,12 @@ export default function PathView({ unlockedUpTo, onSelect }) {
               {i > 0 && (
                 <div style={{
                   width: 2,
-                  height: 32,
-                  // Erledigte Verbindung in Grün, sonst Border-Farbe
-                  background: done ? "var(--success)" : "var(--border)",
-                  opacity: done ? 0.5 : 1,
+                  height: 36,
+                  // Erledigte Verbindung als grüner Verlauf, sonst neutrale Border-Farbe
+                  background: done
+                    ? "linear-gradient(180deg, rgba(74,222,128,0.55), rgba(74,222,128,0.25))"
+                    : "var(--border)",
+                  borderRadius: 2,
                   transition: "background 0.3s",
                 }} />
               )}
@@ -79,57 +81,76 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 16,
-                  padding: "16px 24px",
-                  minWidth: 380,
+                  gap: 18,
+                  padding: "16px 20px 16px 18px",
+                  width: 460,
                   borderRadius: "var(--radius-lg)",
-                  // Border-Farbe je nach Status
+                  // Border-Farbe je nach Status – "next" mit leicht stärkerem Akzent
                   border: `1px solid ${
-                    done ? "rgba(74,222,128,0.2)"
+                    done ? "rgba(74,222,128,0.28)"
                     : isNext ? "var(--border-accent)"
                     : "var(--border)"
                   }`,
                   // Hintergrund je nach Status
-                  background: done ? "rgba(74,222,128,0.05)"
-                    : isNext ? "var(--bg-card-hover)"
+                  background: done
+                    ? "linear-gradient(135deg, rgba(74,222,128,0.06), rgba(74,222,128,0.02))"
+                    : isNext
+                    ? "linear-gradient(135deg, var(--bg-card-hover), var(--bg-card))"
                     : "var(--bg-card)",
                   cursor: locked ? "default" : "pointer",
-                  opacity: locked ? 0.35 : 1,
+                  opacity: locked ? 0.45 : 1,
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                   // Zickzack-Versatz + Hover-Skalierung kombiniert
-                  transform: `translateX(${offsetX}px) ${isHovered ? "scale(1.04)" : "scale(1)"}`,
-                  // Glow-Schatten bei Hover oder bei "next"
+                  transform: `translateX(${offsetX}px) ${isHovered ? "translateY(-2px) scale(1.02)" : "scale(1)"}`,
+                  // Glow-Schatten: Hover > next > kein Schatten
                   boxShadow: isHovered
-                    ? "0 8px 32px var(--accent-glow)"
+                    ? "0 12px 36px var(--accent-glow), 0 0 0 1px var(--border-accent)"
                     : isNext
-                    ? "0 4px 16px var(--accent-glow)"
+                    ? "0 6px 22px var(--accent-glow)"
+                    : done
+                    ? "0 2px 8px rgba(74,222,128,0.08)"
                     : "none",
                   textAlign: "left",
                   position: "relative",
+                  overflow: "hidden",
                 }}
               >
+                {/* Akzent-Balken am linken Rand der "next"-Karte */}
+                {isNext && (
+                  <div style={{
+                    position: "absolute",
+                    left: 0, top: 0, bottom: 0,
+                    width: 3,
+                    background: "var(--accent-gradient)",
+                    borderRadius: "3px 0 0 3px",
+                  }} />
+                )}
+
                 {/* Linker Status-Indikator (Kreis mit Nummer / ✓ / 🔒) */}
                 <div style={{
-                  width: 44, height: 44, borderRadius: 12,
+                  width: 48, height: 48, borderRadius: 14,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: done ? 18 : 16, fontWeight: 700, flexShrink: 0,
+                  fontSize: done ? 20 : 17, fontWeight: 800, flexShrink: 0,
+                  // "done" + "next" bekommen einen Verlauf, gesperrte nur Fläche
                   background: done
-                    ? "rgba(74,222,128,0.15)"
+                    ? "linear-gradient(135deg, rgba(74,222,128,0.22), rgba(74,222,128,0.08))"
                     : isNext
-                    ? "var(--accent-glow)"
+                    ? "linear-gradient(135deg, var(--accent-glow), rgba(126,184,212,0.08))"
                     : "var(--bg-card)",
                   color: done ? "var(--success)" : isNext ? "var(--accent)" : "var(--text-muted)",
                   border: `1px solid ${
-                    done ? "rgba(74,222,128,0.25)"
+                    done ? "rgba(74,222,128,0.35)"
                     : isNext ? "var(--border-accent)"
                     : "var(--border)"
                   }`,
+                  // Subtiler "Tiefen"-Schatten für den aktuellen Knoten
+                  boxShadow: isNext ? "inset 0 1px 0 rgba(255,255,255,0.08)" : "none",
                 }}>
                   {done ? "✓" : locked ? "🔒" : t.id}
                 </div>
 
-                {/* Titel + Kurzbeschreibung */}
-                <div>
+                {/* Titel + Beschreibung (jetzt mit Platz für 2 Zeilen) */}
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{
                     fontSize: 16, fontWeight: 700,
                     color: locked ? "var(--text-muted)" : "var(--text-primary)",
@@ -141,30 +162,57 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                   <div style={{
                     fontSize: "var(--fs-caption)",
                     color: "var(--text-muted)",
-                    lineHeight: 1.5,
-                    maxWidth: 200,
-                    // Lange Beschreibungen auf eine Zeile clampen
+                    lineHeight: 1.45,
+                    // Bis zu 2 Zeilen, danach "…" – verhindert zu lange Kacheln
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
                     overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
                   }}>
                     {t.description}
                   </div>
                 </div>
 
-                {/* Pulsierender "Starten →" Hinweis (nur bei aktueller Aufgabe) */}
+                {/* Rechter Indikator:
+                     - aktuelle Aufgabe: "Starten"-Pill mit Pfeil
+                     - erledigte Aufgabe: "Nochmal"-Hint (dezent)
+                     - gesperrt:          Schloss (ganz dezent) */}
                 {isNext && (
                   <div style={{
-                    position: "absolute",
-                    right: 16,
-                    fontSize: "var(--fs-label)",
-                    fontWeight: 700,
-                    color: "var(--accent)",
-                    letterSpacing: 0.5,
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "7px 12px",
+                    borderRadius: 999,
+                    background: "var(--accent-gradient)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 800,
+                    letterSpacing: 0.8,
                     textTransform: "uppercase",
-                    animation: "pulse 2s infinite",
+                    boxShadow: "0 4px 14px var(--accent-glow)",
+                    flexShrink: 0,
+                    // Sanftes Pulsieren, damit der Blick hier landet
+                    animation: "pulse 2.4s ease-in-out infinite",
                   }}>
-                    Starten →
+                    Starten
+                    <span style={{
+                      fontSize: 13, lineHeight: 1,
+                      transform: isHovered ? "translateX(3px)" : "translateX(0)",
+                      transition: "transform 0.2s",
+                    }}>→</span>
+                  </div>
+                )}
+                {done && (
+                  <div style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    letterSpacing: 0.9,
+                    textTransform: "uppercase",
+                    color: "var(--success)",
+                    opacity: isHovered ? 1 : 0.7,
+                    flexShrink: 0,
+                    transition: "opacity 0.2s",
+                  }}>
+                    Nochmal →
                   </div>
                 )}
               </button>
@@ -172,10 +220,11 @@ export default function PathView({ unlockedUpTo, onSelect }) {
           );
         })}
 
-        {/* "To be continued" – Hint, dass weitere Module kommen */}
+        {/* Abschluss-Linie und "To be continued" – Hint auf kommende Module */}
         <div style={{
-          width: 2, height: 32,
+          width: 2, height: 36,
           background: "var(--border)",
+          borderRadius: 2,
         }} />
         <div style={{
           padding: "12px 24px",
