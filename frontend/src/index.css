@@ -25,13 +25,21 @@
   --success: #4ade80;
   --editor-line-bg: rgba(0, 0, 0, 0.2);
   --editor-text: #e2e8f0;
-  --glow-opacity: 0.08;
-  --card-shadow: 0 2px 8px rgba(0,0,0,0.2);
   --bubble-bot-bg: rgba(126, 184, 212, 0.07);
   --bubble-bot-border: rgba(126, 184, 212, 0.1);
   --bubble-user-bg: rgba(126, 184, 212, 0.15);
   --bubble-user-border: rgba(126, 184, 212, 0.2);
   --bubble-text: #cbd5e1;
+  --fs-label: 12px;
+  --fs-caption: 13px;
+  --fs-body: 14px;
+  --fs-body-lg: 15px;
+  --fs-title-sm: 18px;
+  --fs-title-md: 24px;
+  --fs-brand: 20px;
+  --lh-copy: 1.65;
+  --tracking-tight: -0.4px;
+  --tracking-title: -0.6px;
   --font-sans: "DM Sans", "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
   --radius-sm: 8px;
@@ -61,8 +69,6 @@
   --success: #16a34a;
   --editor-line-bg: rgba(0, 0, 0, 0.03);
   --editor-text: #1e293b;
-  --glow-opacity: 0.04;
-  --card-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
   --bubble-bot-bg: rgba(30, 107, 138, 0.08);
   --bubble-bot-border: rgba(30, 107, 138, 0.15);
   --bubble-user-bg: rgba(30, 107, 138, 0.12);
@@ -74,6 +80,7 @@ body {
   font-family: var(--font-sans);
   background: var(--bg-primary);
   color: var(--text-primary);
+  line-height: 1.5;
   overflow: hidden;
   height: 100vh;
   width: 100%;
@@ -102,10 +109,6 @@ body {
 }
 
 /* Animations */
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -118,10 +121,6 @@ body {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(16px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
@@ -130,13 +129,6 @@ body {
 textarea::placeholder,
 input::placeholder {
   color: var(--text-muted);
-}
-
-/* Glass card base */
-.glass {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(12px);
 }
 
 /* Focus ring */

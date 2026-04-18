@@ -1,7 +1,24 @@
+// ═══════════════════════════════════════════════════════════════
+//  PathView.jsx – Lernpfad als vertikale Zickzack-Liste
+// ═══════════════════════════════════════════════════════════════
+//  Stellt alle 10 Aufgaben aus tasks.js untereinander dar – inspiriert
+//  von Duolingo's Lernpfad. Visuelle Logik:
+//   - Erledigte Aufgaben: grüner Haken, weichgezeichnet
+//   - Aktuelle Aufgabe (next): hervorgehoben mit "Starten →"
+//   - Gesperrte Aufgaben: grau, mit 🔒, nicht klickbar
+//   - Zickzack: jede 2. Aufgabe ist horizontal versetzt (-60 / +60)
+//
+//  Props:
+//   - unlockedUpTo : Index der nächsten freigeschalteten Aufgabe
+//                    (kommt von /api/progress, persistiert pro User)
+//   - onSelect(idx): Callback beim Klick auf eine entsperrte Aufgabe
+// ═══════════════════════════════════════════════════════════════
+
 import { useState } from "react";
 import TASKS from "../data/tasks";
 
 export default function PathView({ unlockedUpTo, onSelect }) {
+  // Welcher Knoten wird gerade gehovered? (für Skalierungs-Effekt)
   const [hovered, setHovered] = useState(null);
 
   return (
@@ -13,42 +30,47 @@ export default function PathView({ unlockedUpTo, onSelect }) {
       alignItems: "center",
       padding: "48px 24px 64px",
     }}>
+      {/* Überschrift + Untertitel */}
       <h2 style={{
-        color: "var(--text-primary)", fontSize: 22, fontWeight: 700,
-        marginBottom: 8, letterSpacing: -0.3,
+        color: "var(--text-primary)", fontSize: 24, fontWeight: 800,
+        marginBottom: 8, letterSpacing: "var(--tracking-title)",
       }}>
         Java Grundlagen
       </h2>
       <p style={{
-        color: "var(--text-secondary)", fontSize: 14, marginBottom: 40,
+        color: "var(--text-secondary)", fontSize: "var(--fs-body-lg)", marginBottom: 40,
+        lineHeight: "var(--lh-copy)", textAlign: "center", maxWidth: 360,
       }}>
         Arbeite dich durch alle 10 Aufgaben
       </p>
 
+      {/* Pfad-Container: alle Knoten + Verbindungslinien */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
         {TASKS.map((t, i) => {
-          const locked = i > unlockedUpTo;
-          const done = i < unlockedUpTo;
-          const isNext = i === unlockedUpTo;
+          // Status pro Knoten berechnen
+          const locked = i > unlockedUpTo;       // gesperrt = noch nicht freigeschaltet
+          const done = i < unlockedUpTo;         // erledigt = liegt vor dem aktuellen
+          const isNext = i === unlockedUpTo;     // aktuelle/nächste Aufgabe
           const isHovered = hovered === i && !locked;
 
-          // Zickzack: gerade Indices links, ungerade rechts
+          // Zickzack: gerade Indices nach links versetzt, ungerade nach rechts
           const offsetX = i % 2 === 0 ? -60 : 60;
 
           return (
             <div key={t.id} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-              {/* Verbindungslinie */}
+              {/* Verbindungslinie zwischen Knoten (außer vor dem ersten) */}
               {i > 0 && (
                 <div style={{
                   width: 2,
                   height: 32,
+                  // Erledigte Verbindung in Grün, sonst Border-Farbe
                   background: done ? "var(--success)" : "var(--border)",
                   opacity: done ? 0.5 : 1,
                   transition: "background 0.3s",
                 }} />
               )}
 
-              {/* Node */}
+              {/* Aufgaben-Knoten (Button) */}
               <button
                 onClick={() => !locked && onSelect(i)}
                 onMouseEnter={() => setHovered(i)}
@@ -61,18 +83,22 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                   padding: "16px 24px",
                   minWidth: 380,
                   borderRadius: "var(--radius-lg)",
+                  // Border-Farbe je nach Status
                   border: `1px solid ${
                     done ? "rgba(74,222,128,0.2)"
                     : isNext ? "var(--border-accent)"
                     : "var(--border)"
                   }`,
+                  // Hintergrund je nach Status
                   background: done ? "rgba(74,222,128,0.05)"
                     : isNext ? "var(--bg-card-hover)"
                     : "var(--bg-card)",
                   cursor: locked ? "default" : "pointer",
                   opacity: locked ? 0.35 : 1,
                   transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  // Zickzack-Versatz + Hover-Skalierung kombiniert
                   transform: `translateX(${offsetX}px) ${isHovered ? "scale(1.04)" : "scale(1)"}`,
+                  // Glow-Schatten bei Hover oder bei "next"
                   boxShadow: isHovered
                     ? "0 8px 32px var(--accent-glow)"
                     : isNext
@@ -82,7 +108,7 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                   position: "relative",
                 }}
               >
-                {/* Nummer / Status */}
+                {/* Linker Status-Indikator (Kreis mit Nummer / ✓ / 🔒) */}
                 <div style={{
                   width: 44, height: 44, borderRadius: 12,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -102,19 +128,22 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                   {done ? "✓" : locked ? "🔒" : t.id}
                 </div>
 
+                {/* Titel + Kurzbeschreibung */}
                 <div>
                   <div style={{
-                    fontSize: 15, fontWeight: 600,
+                    fontSize: 16, fontWeight: 700,
                     color: locked ? "var(--text-muted)" : "var(--text-primary)",
-                    marginBottom: 2,
+                    marginBottom: 4,
+                    letterSpacing: "var(--tracking-tight)",
                   }}>
                     {t.title}
                   </div>
                   <div style={{
-                    fontSize: 12,
+                    fontSize: "var(--fs-caption)",
                     color: "var(--text-muted)",
-                    lineHeight: 1.4,
+                    lineHeight: 1.5,
                     maxWidth: 200,
+                    // Lange Beschreibungen auf eine Zeile clampen
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -123,12 +152,12 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                   </div>
                 </div>
 
-                {/* "Starten" Hinweis für nächste Aufgabe */}
+                {/* Pulsierender "Starten →" Hinweis (nur bei aktueller Aufgabe) */}
                 {isNext && (
                   <div style={{
                     position: "absolute",
                     right: 16,
-                    fontSize: 11,
+                    fontSize: "var(--fs-label)",
                     fontWeight: 700,
                     color: "var(--accent)",
                     letterSpacing: 0.5,
@@ -143,7 +172,7 @@ export default function PathView({ unlockedUpTo, onSelect }) {
           );
         })}
 
-        {/* To be continued */}
+        {/* "To be continued" – Hint, dass weitere Module kommen */}
         <div style={{
           width: 2, height: 32,
           background: "var(--border)",
@@ -153,7 +182,7 @@ export default function PathView({ unlockedUpTo, onSelect }) {
           borderRadius: "var(--radius-lg)",
           border: "1px dashed var(--border)",
           color: "var(--text-muted)",
-          fontSize: 13,
+          fontSize: "var(--fs-caption)",
           fontStyle: "italic",
           opacity: 0.4,
         }}>

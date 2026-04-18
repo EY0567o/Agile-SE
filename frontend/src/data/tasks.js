@@ -1,3 +1,22 @@
+// ═══════════════════════════════════════════════════════════════
+//  tasks.js – Die 10 Java-Lernaufgaben
+// ═══════════════════════════════════════════════════════════════
+//  Zentrale Quelle der Wahrheit für alle Aufgaben. Wird verwendet von:
+//   - PathView.jsx     → Zickzack-Pfad mit allen Aufgaben
+//   - LearnScreen.jsx  → Editor, Beschreibung, Fortschritts-Logik
+//   - server.js        → KI-Kontext (Titel + Hints an LLM weitergeben)
+//
+//  Jede Aufgabe hat:
+//   - id          : fortlaufende Nummer (1–10), bestimmt die Reihenfolge
+//   - title       : wird in der Navigation und im Header angezeigt
+//   - description : Aufgabentext für den Lernenden
+//   - hint        : Hinweis an die KI (wird im System-Prompt genutzt)
+//   - starter     : Vorlagen-Code, den der User beim Öffnen sieht
+//
+//  Aufgaben sind didaktisch aufsteigend (Hello World → Klassen) und
+//  werden sequenziell freigeschaltet.
+// ═══════════════════════════════════════════════════════════════
+
 const TASKS = [
   {
     id: 1,

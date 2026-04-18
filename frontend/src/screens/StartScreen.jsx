@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ThemeToggle from "../components/ThemeToggle";
+import useApi from "../hooks/useApi";
 
 const DEMO_CODE = `public class Main {
     public static void main(String[] args) {
@@ -15,15 +16,46 @@ const DEMO_CODE = `public class Main {
 // → Hallo, Student!`;
 
 const NAV_ITEMS = [
-  { key: "start", label: "Start", icon: "</>" },
-  { key: "learn", label: "Lernpfad", icon: "◈" },
-  { key: "code", label: "Trainingsraum", icon: ">_" },
+  { key: "learn", label: "Lernpfad", iconSrc: "/Logo_lernpfad.png", iconAlt: "Lernpfad Logo" },
+  { key: "code", label: "Trainingsraum", iconSrc: "/Logo_Trainingsraum.png", iconAlt: "Trainingsraum Logo" },
 ];
 
-export default function StartScreen({ onNavigate, theme, onToggleTheme, username, onLogout, onDeleteAccount }) {
+export default function StartScreen({ onNavigate, theme, onToggleTheme, username, onLogout, onDeleteAccount, token }) {
+  const apiFetch = useApi(token);
   const [profileOpen, setProfileOpen] = useState(false);
   const [hoverBtn, setHoverBtn] = useState(null);
   const [hoverNav, setHoverNav] = useState(null);
+  const [hoverSummary, setHoverSummary] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryText, setSummaryText] = useState("");
+  const [summarySource, setSummarySource] = useState("ai");
+  const [summaryError, setSummaryError] = useState("");
+
+  const handleLearningSummary = async () => {
+    if (summaryLoading) return;
+    if (summaryOpen) {
+      setSummaryOpen(false);
+      return;
+    }
+
+    setSummaryOpen(true);
+    setSummaryLoading(true);
+    setSummaryError("");
+
+    try {
+      const res = await apiFetch("/api/learning-summary");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Lernstands-Zusammenfassung konnte nicht geladen werden.");
+      setSummaryText(data.summary || "");
+      setSummarySource(data.source || "ai");
+    } catch (err) {
+      setSummaryError(err.message || "Lernstands-Zusammenfassung konnte nicht geladen werden.");
+      setSummaryText("");
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
 
   return (
     <div style={{
@@ -67,11 +99,11 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <img src="/logo.png" alt="CodeBuddy Logo" style={{
-            width: 38, height: 38, objectFit: "contain",
+            width: 52, height: 52, objectFit: "contain",
           }} />
           <span style={{
-            fontSize: 17, fontWeight: 700, color: "var(--text-primary)",
-            letterSpacing: -0.5,
+            fontSize: "var(--fs-brand)", fontWeight: 700, color: "var(--text-primary)",
+            letterSpacing: "var(--tracking-tight)",
           }}>
             CodeBuddy
           </span>
@@ -81,31 +113,84 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
           {NAV_ITEMS.map((item) => (
             <button
               key={item.key}
-              onClick={() => item.key !== "start" && onNavigate(item.key)}
+              onClick={() => onNavigate(item.key)}
               onMouseEnter={() => setHoverNav(item.key)}
               onMouseLeave={() => setHoverNav(null)}
               style={{
                 display: "flex", alignItems: "center", gap: 6,
-                padding: "8px 16px",
+                minHeight: 52,
+                padding: "8px 18px",
                 borderRadius: "var(--radius-sm)",
-                border: item.key === "start" ? "1px solid var(--border-accent)" : "1px solid transparent",
-                background: item.key === "start"
-                  ? "var(--accent-glow)"
-                  : hoverNav === item.key ? "var(--bg-card)" : "transparent",
-                color: item.key === "start" ? "var(--accent)" : "var(--text-secondary)",
-                fontSize: 13,
+                border: hoverNav === item.key ? "1px solid var(--border-accent)" : "1px solid transparent",
+                background: hoverNav === item.key ? "var(--bg-card)" : "transparent",
+                color: hoverNav === item.key ? "var(--text-primary)" : "var(--text-secondary)",
+                fontSize: 15,
                 fontWeight: 600,
                 cursor: "pointer",
                 transition: "all 0.2s",
               }}
             >
+              {item.iconSrc ? (
+                <img
+                  src={item.iconSrc}
+                  alt={item.iconAlt}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    objectFit: "contain",
+                    opacity: 0.85,
+                  }}
+                />
+              ) : (
               <span style={{
-                fontFamily: "var(--font-mono)", fontSize: 12,
-                opacity: 0.7,
-              }}>{item.icon}</span>
+                  fontFamily: "var(--font-mono)", fontSize: 12,
+                  opacity: 0.7,
+                }}>{item.icon}</span>
+              )}
               {item.label}
             </button>
           ))}
+          <button
+            onClick={handleLearningSummary}
+            onMouseEnter={() => setHoverSummary(true)}
+            onMouseLeave={() => setHoverSummary(false)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              minHeight: 52,
+              padding: "8px 18px",
+              borderRadius: "var(--radius-sm)",
+              border: (summaryOpen || hoverSummary) ? "1px solid var(--border-accent)" : "1px solid transparent",
+              background: (summaryOpen || hoverSummary) ? "var(--bg-card)" : "transparent",
+              color: (summaryOpen || hoverSummary) ? "var(--text-primary)" : "var(--text-secondary)",
+              fontSize: 15,
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "all 0.2s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span style={{
+              width: 40,
+              height: 40,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
+              flexShrink: 0,
+            }}>
+              <img
+                src="/logo_was%20kann%20ich%20schon.png"
+                alt="Was kann ich schon Logo"
+                style={{
+                  width: 40,
+                  height: 40,
+                  objectFit: "contain",
+                  opacity: 0.85,
+                }}
+              />
+            </span>
+            Was kann ich schon?
+          </button>
           <div style={{ width: 1, height: 20, background: "var(--border)", margin: "0 8px" }} />
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
           {username && (
@@ -138,16 +223,16 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
                       padding: "8px 16px 12px", borderBottom: "1px solid var(--border)",
                       marginBottom: 4,
                     }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--text-primary)" }}>
+                      <div style={{ fontSize: "var(--fs-body)", fontWeight: 700, color: "var(--text-primary)" }}>
                         {username}
                       </div>
-                      <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                      <div style={{ fontSize: "var(--fs-label)", color: "var(--text-muted)", marginTop: 2 }}>
                         Angemeldet
                       </div>
                     </div>
                     <button onClick={() => { setProfileOpen(false); onLogout(); }} style={{
                       width: "100%", padding: "8px 16px", background: "none", border: "none",
-                      color: "var(--text-secondary)", fontSize: 12, cursor: "pointer",
+                      color: "var(--text-secondary)", fontSize: "var(--fs-caption)", cursor: "pointer",
                       textAlign: "left", transition: "background 0.15s",
                     }}
                       onMouseEnter={(e) => e.target.style.background = "var(--bg-card-hover)"}
@@ -160,7 +245,7 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
                       }
                     }} style={{
                       width: "100%", padding: "8px 16px", background: "none", border: "none",
-                      color: "#ef4444", fontSize: 12, cursor: "pointer",
+                      color: "#ef4444", fontSize: "var(--fs-caption)", cursor: "pointer",
                       textAlign: "left", transition: "background 0.15s",
                     }}
                       onMouseEnter={(e) => e.target.style.background = "var(--bg-card-hover)"}
@@ -187,16 +272,16 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
       }}>
         {/* Heading */}
         <h1 style={{
-          fontSize: 56,
+          fontSize: "clamp(50px, 5.7vw, 68px)",
           fontWeight: 800,
           color: "var(--text-primary)",
           margin: "0 0 20px 0",
           letterSpacing: -1.5,
           lineHeight: 1.1,
-          maxWidth: 700,
+          maxWidth: 980,
           animation: "fadeUp 0.6s ease 0.1s both",
         }}>
-          Lerne Programmieren{" "}
+          Lerne Programmieren
           <br />
           <span style={{
             background: "var(--accent-gradient)",
@@ -209,11 +294,12 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
 
         {/* Subtitle */}
         <p style={{
-          fontSize: 18,
+          fontSize: 20,
           color: "var(--text-secondary)",
           margin: "0 0 44px 0",
-          maxWidth: 520,
-          lineHeight: 1.7,
+          maxWidth: 760,
+          lineHeight: 1.65,
+          paddingInline: 18,
           animation: "fadeUp 0.6s ease 0.2s both",
         }}>
           Dein intelligenter Lernbegleiter, der dir hilft, Java von Grund auf zu verstehen. Interaktiv, persönlich und in deinem Tempo.
@@ -232,12 +318,12 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
             onMouseLeave={() => setHoverBtn(null)}
             style={{
               display: "flex", alignItems: "center", gap: 10,
-              padding: "14px 32px",
+              padding: "11px 32px",
               borderRadius: "var(--radius-md)",
               background: "var(--accent-gradient)",
               border: "none",
               color: "#fff",
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: 700,
               cursor: "pointer",
               transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -248,8 +334,16 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
               letterSpacing: 0.2,
             }}
           >
+            <img
+              src="/Logo_lernpfad.png"
+              alt="Lernpfad Logo"
+              style={{
+                width: 58,
+                height: 58,
+                objectFit: "contain",
+              }}
+            />
             Lernpfad starten
-            <span style={{ fontSize: 18 }}>→</span>
           </button>
 
           <button
@@ -258,24 +352,27 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
             onMouseLeave={() => setHoverBtn(null)}
             style={{
               display: "flex", alignItems: "center", gap: 10,
-              padding: "14px 28px",
+              padding: "11px 28px",
               borderRadius: "var(--radius-md)",
               background: hoverBtn === "code" ? "var(--bg-card-hover)" : "transparent",
               border: "1px solid var(--border)",
               color: "var(--text-primary)",
-              fontSize: 15,
+              fontSize: 17,
               fontWeight: 600,
               cursor: "pointer",
               transition: "all 0.3s",
               transform: hoverBtn === "code" ? "translateY(-2px)" : "none",
             }}
           >
-            <span style={{
-              fontFamily: "var(--font-mono)",
-              color: "var(--accent)",
-              fontSize: 14,
-              fontWeight: 700,
-            }}>{">_"}</span>
+            <img
+              src="/Logo_Trainingsraum.png"
+              alt="Trainingsraum Logo"
+              style={{
+                width: 58,
+                height: 58,
+                objectFit: "contain",
+              }}
+            />
             Trainingsraum öffnen
           </button>
         </div>
@@ -350,6 +447,108 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
           </div>
         </div>
       </div>
+
+      {summaryOpen && (
+        <>
+          <div
+            onClick={() => setSummaryOpen(false)}
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "var(--bg-overlay)",
+              zIndex: 29,
+            }}
+          />
+          <div style={{
+            position: "fixed",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "min(560px, calc(100vw - 32px))",
+            maxHeight: "min(70vh, 680px)",
+            overflow: "auto",
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-lg)",
+            boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+            padding: 24,
+            zIndex: 30,
+          }}>
+            <div style={{
+              display: "flex",
+              alignItems: "flex-start",
+              justifyContent: "space-between",
+              gap: 16,
+              marginBottom: 18,
+            }}>
+              <div>
+                <div style={{
+                  fontSize: "var(--fs-title-md)",
+                  fontWeight: 800,
+                  color: "var(--text-primary)",
+                  letterSpacing: "var(--tracking-title)",
+                }}>
+                  Was kann ich schon?
+                </div>
+                <div style={{
+                  color: "var(--text-muted)",
+                  fontSize: 12,
+                  marginTop: 4,
+                }}>
+                  {summarySource === "ai" ? "KI-gestuetzte Einschaetzung" : "Automatisch aus deinem Lernstand erzeugt"}
+                </div>
+              </div>
+              <button
+                onClick={() => setSummaryOpen(false)}
+                style={{
+                  width: 34, height: 34,
+                  borderRadius: "50%",
+                  border: "1px solid var(--border)",
+                  background: "var(--bg-card)",
+                  color: "var(--text-secondary)",
+                  cursor: "pointer",
+                  fontSize: 18,
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {summaryLoading ? (
+              <div style={{
+                padding: "18px 0",
+                color: "var(--text-secondary)",
+                fontSize: "var(--fs-body)",
+                lineHeight: "var(--lh-copy)",
+              }}>
+                CodeBuddy schaut sich deinen bisherigen Lernfortschritt an...
+              </div>
+            ) : summaryError ? (
+              <div style={{
+                padding: "14px 16px",
+                borderRadius: "var(--radius-md)",
+                background: "rgba(239,68,68,0.1)",
+                border: "1px solid rgba(239,68,68,0.25)",
+                color: "#ef4444",
+                fontSize: "var(--fs-caption)",
+                lineHeight: 1.6,
+              }}>
+                {summaryError}
+              </div>
+            ) : (
+              <div style={{
+                whiteSpace: "pre-wrap",
+                color: "var(--text-secondary)",
+                fontSize: "var(--fs-body)",
+                lineHeight: 1.8,
+              }}>
+                {summaryText}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

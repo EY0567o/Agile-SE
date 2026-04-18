@@ -1,12 +1,12 @@
 {
   "name": "codebuddy-backend",
   "version": "1.0.0",
-  "description": "CodeBuddy Backend – API-Proxy für Anthropic",
+  "description": "CodeBuddy Backend – Express-API mit Auth, Java-Runner und LLM-Anbindung (Gemini / Anthropic)",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node --watch server.js"
+    "start": "node --env-file=.env server.js",
+    "dev": "node --env-file=.env --watch server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
