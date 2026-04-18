@@ -1,6 +1,6 @@
 # CodeBuddy – Java Lernassistent
 
-Eine interaktive Lernplattform, die Anfängern hilft, Java von Grund auf zu lernen. Mit eingebautem Code-Editor, KI-gestütztem Tutor (Claude API) und einem strukturierten Lernpfad mit 10 Aufgaben.
+Eine interaktive Lernplattform, die Anfängern hilft, Java von Grund auf zu lernen. Mit eingebautem Code-Editor, KI-gestütztem Tutor und einem strukturierten Lernpfad mit 10 Aufgaben.
 
 ## Features
 
@@ -15,13 +15,13 @@ Eine interaktive Lernplattform, die Anfängern hilft, Java von Grund auf zu lern
 
 ## Tech-Stack
 
-| Schicht    | Technologie                                          |
-|------------|------------------------------------------------------|
-| Frontend   | React 19, Vite 6, Monaco Editor                      |
-| Backend    | Node.js, Express 4 (ESM)                             |
-| Datenbank  | SQLite (better-sqlite3, WAL-Modus)                   |
-| KI         | Google Gemini (primär) oder Anthropic Claude (Fallback) |
-| Auth       | bcryptjs + UUID-Token                                |
+| Schicht | Technologie |
+|---------|-------------|
+| Frontend | React 19, Vite 6, Monaco Editor |
+| Backend | Node.js, Express 4 (ESM) |
+| Datenbank | SQLite (better-sqlite3, WAL-Modus) |
+| KI | Google Gemini (primär) oder Anthropic Claude (Fallback) |
+| Auth | bcryptjs + UUID-Token |
 
 ## Voraussetzungen
 
@@ -63,7 +63,7 @@ Die App ist dann unter `http://localhost:5173` erreichbar.
 
 ## Projektstruktur
 
-```
+```text
 AgileSE/
 ├── backend/
 │   ├── server.js          # Express-API (Auth, Chat, Code-Ausführung, Fortschritt)
@@ -99,30 +99,28 @@ AgileSE/
 
 ## API-Endpoints
 
-| Methode  | Pfad                    | Beschreibung                           | Auth |
-|----------|-------------------------|----------------------------------------|------|
-| POST     | `/api/register`         | Neuen Benutzer registrieren            | Nein |
-| POST     | `/api/login`            | Anmelden, Token erhalten               | Nein |
-| POST     | `/api/logout`           | Abmelden                               | Ja   |
-| DELETE   | `/api/account`          | Konto und Daten löschen                | Ja   |
-| GET      | `/api/progress`         | Lernfortschritt laden                  | Ja   |
-| POST     | `/api/progress/:taskId` | Fortschritt speichern                  | Ja   |
-| POST     | `/api/chat`             | KI-Chat-Nachricht senden               | Ja   |
-| GET      | `/api/learning-summary` | KI-Zusammenfassung des Lernstands      | Ja   |
-| POST     | `/api/run`              | Java-Code kompilieren/ausführen        | Ja   |
-| GET      | `/api/health`           | Health-Check                           | Nein |
+| Methode | Pfad | Beschreibung | Auth |
+|---------|------|--------------|------|
+| POST | `/api/register` | Neuen Benutzer registrieren | Nein |
+| POST | `/api/login` | Anmelden, Token erhalten | Nein |
+| POST | `/api/logout` | Abmelden | Ja |
+| DELETE | `/api/account` | Konto und Daten löschen | Ja |
+| GET | `/api/progress` | Lernfortschritt laden | Ja |
+| POST | `/api/progress/:taskId` | Fortschritt speichern | Ja |
+| POST | `/api/chat` | KI-Chat-Nachricht senden | Ja |
+| GET | `/api/learning-summary` | KI-Zusammenfassung des Lernstands | Ja |
+| POST | `/api/run` | Java-Code kompilieren/ausführen | Ja |
+| GET | `/api/health` | Health-Check | Nein |
 
 ## Umgebungsvariablen
 
-| Variable             | Beschreibung                                    | Standard              |
-|----------------------|-------------------------------------------------|-----------------------|
-| `GEMINI_API_KEY`     | Google Gemini API-Schlüssel (primäres LLM)      | —                     |
-| `GEMINI_MODEL`       | Gemini-Modellname                               | `gemini-2.5-flash`    |
-| `ANTHROPIC_API_KEY`  | Anthropic Claude API-Schlüssel (Fallback)       | —                     |
-| `PORT`               | Backend-Port                                    | `3001`                |
+| Variable | Beschreibung | Standard |
+|----------|--------------|----------|
+| `GEMINI_API_KEY` | Google Gemini API-Schlüssel (primäres LLM) | — |
+| `GEMINI_MODEL` | Gemini-Modellname | `gemini-2.5-flash` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude API-Schlüssel (Fallback) | — |
+| `PORT` | Backend-Port | `3001` |
 
-Mindestens **einer** der beiden Keys (`GEMINI_API_KEY` oder `ANTHROPIC_API_KEY`) muss gesetzt sein, damit Chat und Lernstands-Zusammenfassung funktionieren. Ist nur Gemini gesetzt, nutzt das Backend Gemini; ist nur Claude gesetzt, wird Claude verwendet; sind beide gesetzt, hat Gemini Vorrang.
+Mindestens einer der beiden Keys (`GEMINI_API_KEY` oder `ANTHROPIC_API_KEY`) muss gesetzt sein, damit Chat und Lernstands-Zusammenfassung funktionieren. Ist nur Gemini gesetzt, nutzt das Backend Gemini; ist nur Claude gesetzt, wird Claude verwendet; sind beide gesetzt, hat Gemini Vorrang.
 
 ## Lizenz
-
-Dieses Projekt ist im Rahmen des Moduls Agile Software Engineering entstanden.
