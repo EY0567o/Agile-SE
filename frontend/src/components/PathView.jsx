@@ -179,8 +179,7 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                      - gesperrt:          Schloss (ganz dezent) */}
                 {isNext && (
                   <div style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    padding: "7px 12px",
+                    padding: "7px 14px",
                     borderRadius: 999,
                     background: "var(--accent-gradient)",
                     color: "#fff",
@@ -194,11 +193,6 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                     animation: "pulse 2.4s ease-in-out infinite",
                   }}>
                     Starten
-                    <span style={{
-                      fontSize: 13, lineHeight: 1,
-                      transform: isHovered ? "translateX(3px)" : "translateX(0)",
-                      transition: "transform 0.2s",
-                    }}>→</span>
                   </div>
                 )}
                 {done && (
