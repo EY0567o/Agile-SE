@@ -68,7 +68,9 @@ AgileSE/
 ├── backend/
 │   ├── server.js          # Express-API (Auth, Chat, Code-Ausführung, Fortschritt)
 │   ├── db.js              # SQLite-Verbindung und Tabellenerstellung
-│   ├── .env               # Umgebungsvariablen (API-Key, Port)
+│   ├── .env.example       # Vorlage für Umgebungsvariablen
+│   ├── .env               # Umgebungsvariablen (API-Key, Port) – gitignored
+│   ├── codebuddy.db       # SQLite-Datenbank (wird beim ersten Start erzeugt)
 │   └── package.json
 │
 ├── frontend/
@@ -123,4 +125,6 @@ AgileSE/
 
 Mindestens einer der beiden Keys (`GEMINI_API_KEY` oder `ANTHROPIC_API_KEY`) muss gesetzt sein, damit Chat und Lernstands-Zusammenfassung funktionieren. Ist nur Gemini gesetzt, nutzt das Backend Gemini; ist nur Claude gesetzt, wird Claude verwendet; sind beide gesetzt, hat Gemini Vorrang.
 
-## Lizenz
+## Hinweis
+
+Dieses Projekt entstand im Rahmen des Moduls **Agile Softwareentwicklung** an der DHBW Stuttgart.
