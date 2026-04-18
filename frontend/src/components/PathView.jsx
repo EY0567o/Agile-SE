@@ -206,7 +206,7 @@ export default function PathView({ unlockedUpTo, onSelect }) {
                     flexShrink: 0,
                     transition: "opacity 0.2s",
                   }}>
-                    Nochmal →
+                    Nochmal
                   </div>
                 )}
               </button>
