@@ -106,7 +106,10 @@ app.get("/api/progress", auth, (req, res) => {
 
 // Fortschritt speichern
 app.post("/api/progress/:taskId", auth, (req, res) => {
-  const taskId = parseInt(req.params.taskId);
+  const taskId = parseInt(req.params.taskId, 10);
+  if (isNaN(taskId) || taskId < 1 || taskId > TASK_TITLES.length) {
+    return res.status(400).json({ error: "Ungültige Aufgaben-ID" });
+  }
   const { code, solved } = req.body;
 
   db.prepare(`
@@ -160,10 +163,18 @@ app.post("/api/chat", auth, async (req, res) => {
     systemPrompt += `\nPasse deine Erklärungen an das Niveau des Lernenden an.`;
   }
 
-  let codeInjected = false;
-  const apiMessages = messages.map((msg) => {
-    if (!codeInjected && msg.role === "user" && code) {
-      codeInjected = true;
+  // Aktuellen Code an die LETZTE User-Nachricht hängen,
+  // damit die KI den Code im Kontext der aktuellen Frage sieht.
+  let lastUserIdx = -1;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "user") {
+      lastUserIdx = i;
+      break;
+    }
+  }
+
+  const apiMessages = messages.map((msg, i) => {
+    if (i === lastUserIdx && code) {
       return {
         role: "user",
         content: `Mein aktueller Java-Code:\n\`\`\`java\n${code}\n\`\`\`\n\nMeine Frage: ${msg.content}`,
@@ -172,8 +183,9 @@ app.post("/api/chat", auth, async (req, res) => {
     return { role: msg.role, content: msg.content };
   });
 
-  if (!codeInjected && code) {
-    apiMessages.unshift({
+  // Fallback: Keine User-Nachricht vorhanden, aber Code → als neue Nachricht anhängen
+  if (lastUserIdx === -1 && code) {
+    apiMessages.push({
       role: "user",
       content: `Mein aktueller Java-Code:\n\`\`\`java\n${code}\n\`\`\``,
     });
@@ -202,8 +214,11 @@ app.post("/api/run", auth, async (req, res) => {
     return res.status(400).json({ error: "code ist erforderlich" });
   }
 
-  const classMatch = code.match(/public\s+class\s+(\w+)/);
-  const className = classMatch ? classMatch[1] : "Main";
+  // Java verlangt: Dateiname == Name der public class (falls vorhanden),
+  // ansonsten == Name der ersten Klasse
+  const publicMatch = code.match(/public\s+class\s+(\w+)/);
+  const anyMatch = code.match(/class\s+(\w+)/);
+  const className = publicMatch?.[1] ?? anyMatch?.[1] ?? "Main";
   const workDir = join(tmpdir(), `codebuddy-${randomUUID()}`);
 
   try {

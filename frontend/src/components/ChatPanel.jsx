@@ -42,9 +42,10 @@ export default function ChatPanel({ code, greeting, token, taskId }) {
       if (!res.ok) throw new Error(data.error || "Unbekannter Fehler");
       setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
     } catch (err) {
+      // Fehlermeldungen werden nur lokal angezeigt, nicht in die API-History übernommen
       setMessages((prev) => [
         ...prev,
-        { role: "bot", text: err.message || "Verbindungsfehler – bitte versuche es erneut." },
+        { role: "bot", text: err.message || "Verbindungsfehler – bitte versuche es erneut.", persist: false },
       ]);
     }
     setLoading(false);
