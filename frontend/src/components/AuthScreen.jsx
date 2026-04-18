@@ -45,16 +45,13 @@ export default function AuthScreen({ onLogin, onRegister }) {
       }}>
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <img src="/logo.png" alt="CodeBuddy Logo" style={{
+            width: 80, height: 80, objectFit: "contain",
+            marginBottom: 8,
+          }} />
           <div style={{
             fontSize: 28, fontWeight: 800, color: "var(--text-primary)",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
           }}>
-            <span style={{
-              background: "var(--accent-gradient)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              fontSize: 24,
-            }}>&lt;/&gt;</span>
             CodeBuddy
           </div>
           <p style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 6 }}>

@@ -66,12 +66,9 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
         borderBottom: "1px solid var(--border)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{
-            width: 34, height: 34, borderRadius: 10,
-            background: "var(--accent-gradient)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: 14, fontWeight: 800, color: "#fff",
-          }}>{"</>"}</div>
+          <img src="/logo.png" alt="CodeBuddy Logo" style={{
+            width: 38, height: 38, objectFit: "contain",
+          }} />
           <span style={{
             fontSize: 17, fontWeight: 700, color: "var(--text-primary)",
             letterSpacing: -0.5,
