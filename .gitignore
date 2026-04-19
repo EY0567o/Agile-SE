@@ -1,1 +1,6 @@
 .claude/
+
+# SQLite-Datenbankdateien (werden zur Laufzeit erzeugt/aktualisiert)
+backend/*.db
+backend/*.db-wal
+backend/*.db-shm
