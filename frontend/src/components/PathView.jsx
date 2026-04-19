@@ -30,20 +30,6 @@ export default function PathView({ unlockedUpTo, onSelect }) {
       alignItems: "center",
       padding: "48px 24px 64px",
     }}>
-      {/* Überschrift + Untertitel */}
-      <h2 style={{
-        color: "var(--text-primary)", fontSize: 24, fontWeight: 800,
-        marginBottom: 8, letterSpacing: "var(--tracking-title)",
-      }}>
-        Java Grundlagen
-      </h2>
-      <p style={{
-        color: "var(--text-secondary)", fontSize: "var(--fs-body-lg)", marginBottom: 40,
-        lineHeight: "var(--lh-copy)", textAlign: "center", maxWidth: 360,
-      }}>
-        Arbeite dich durch alle 10 Aufgaben
-      </p>
-
       {/* Pfad-Container: alle Knoten + Verbindungslinien */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
         {TASKS.map((t, i) => {
