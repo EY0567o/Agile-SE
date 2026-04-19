@@ -1,55 +1,115 @@
-/*Standardabstände von jeglichen Browser werden entfernt*/
+/* ═══════════════════════════════════════════════════════════════
+    index.css – Globales Stylesheet & Design-Tokens
+   ═══════════════════════════════════════════════════════════════
+    Wird einmalig in main.jsx importiert und gilt damit für die
+    gesamte React-App. Enthält:
+      1) Browser-Reset (margin/padding/box-sizing)
+      2) CSS-Variablen für das Dark-Theme (:root)
+      3) Overrides für das Light-Theme ([data-theme="light"])
+      4) Body- und #root-Layout (volle Viewport-Höhe)
+      5) Scrollbar-Styling (WebKit)
+      6) Keyframe-Animationen (fadeUp, fadeIn, pulse, slideUp)
+      7) Placeholder- und Focus-Styles für Inputs
+
+    Themen-Wechsel: ThemeToggle.jsx setzt
+    document.documentElement.dataset.theme = "light" | "dark".
+    Sobald "light" gesetzt ist, greifen die Variablen aus dem
+    [data-theme="light"]-Block und überschreiben die Defaults.
+
+    Verwendung der Variablen im JSX:
+      style={{ background: "var(--bg-card)", color: "var(--text-primary)" }}
+   ═══════════════════════════════════════════════════════════════ */
+
+
+/* ─── 1) Browser-Reset ───────────────────────────────────────────
+    * trifft jedes Element. Wir entfernen die Default-Margins/
+    -Paddings, die jeder Browser von Haus aus mitbringt
+    (z.B. body hat 8px margin, h1 ein dickes margin oben/unten).
+    box-sizing: border-box → padding und border zählen mit in die
+    Breite/Höhe rein, damit width: 100% mit padding nicht plötzlich
+    breiter als der Container wird. */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/*mit var(--bg-primary) kann man des später bei React verwenden */
+
+/* ─── 2) Design-Tokens für Dark-Theme (Default) ──────────────────
+    Alle Farben, Schriftgrößen, Radien und Fonts liegen hier zentral
+    als CSS-Variablen. Vorteil: einmal ändern, überall wirksam. Kein
+    Hex-Code wird im Komponenten-JSX direkt geschrieben – sondern
+    immer über var(--name). */
 :root {
-  --bg-primary: #0b0f1a;
-  --bg-secondary: #212d49;
-  --bg-card: rgba(255, 255, 255, 0.03);
-  --bg-card-hover: rgba(126, 184, 212, 0.06);
-  --bg-editor: #0d1117;
-  --bg-overlay: rgba(0, 0, 0, 0.3);
-  --bg-header: rgba(0, 0, 0, 0.3);
-  --bg-chat: rgba(0, 0, 0, 0.15);
-  --border: rgba(255, 255, 255, 0.06);
-  --border-accent: rgba(126, 184, 212, 0.25);
-  --accent: #7eb8d4;
-  --accent-glow: rgba(126, 184, 212, 0.15);
-  --accent-gradient: linear-gradient(135deg, #7eb8d4, #5a9bb5);
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #475569;
-  --success: #4ade80;
-  --editor-text: #e2e8f0;
-  --bubble-bot-bg: rgba(126, 184, 212, 0.07);
+  /* Hintergründe (von tief bis hell gestaffelt) */
+  --bg-primary: #0b0f1a;                     /* Seitenhintergrund (sehr dunkles Marineblau) */
+  --bg-secondary: #2a3c64;                   /* Karten/Modals (Auth-Panel, QuickActions, StartScreen-Card) */
+  --bg-card: rgba(255, 255, 255, 0.03);      /* Sehr dezente Karten (Aufgaben-Knoten, Chat-Header) */
+  --bg-card-hover: rgba(126, 184, 212, 0.06);/* Karten-Hover */
+  --bg-editor: #0d1117;                      /* Monaco-Editor-Hintergrund */
+  --bg-overlay: rgba(0, 0, 0, 0.3);          /* Modal-Overlay (verdunkelt den Hintergrund) */
+  --bg-header: rgba(0, 0, 0, 0.3);           /* Top-Bar-Hintergrund (leicht durchscheinend) */
+  --bg-chat: rgba(0, 0, 0, 0.15);            /* Chat-Spalten-Hintergrund */
+
+  /* Borders (für Karten, Inputs, Trennlinien) */
+  --border: rgba(255, 255, 255, 0.06);       /* neutrale, kaum sichtbare Trennung */
+  --border-accent: rgba(126, 184, 212, 0.25);/* mit Akzentfarbe – für Fokus/aktive Elemente */
+
+  /* Akzentfarbe (Hellblau) – Marken-Farbe der App */
+  --accent: #7eb8d4;                                              /* Buttons, Links, Highlights */
+  --accent-glow: rgba(126, 184, 212, 0.15);                       /* sanfter Schein hinter Akzent-Elementen */
+  --accent-gradient: linear-gradient(135deg, #7eb8d4, #5a9bb5);   /* Verlauf für Primary-Buttons */
+
+  /* Textfarben (3 Stufen für visuelle Hierarchie) */
+  --text-primary: #f1f5f9;     /* Überschriften, wichtige Texte */
+  --text-secondary: #94a3b8;   /* normale Body-Texte, Labels */
+  --text-muted: #475569;       /* Platzhalter, deaktivierte Elemente */
+  --success: #4ade80;          /* Grün für "gelöst", Erfolg, korrekte Antwort */
+
+  /* Editor & Chat (eigene Tokens, weil sie speziellen Kontrast brauchen) */
+  --editor-text: #e2e8f0;                       /* Code-Farbe im Monaco-Editor */
+  --bubble-bot-bg: rgba(126, 184, 212, 0.07);   /* Bot-Nachricht – sehr dezent */
   --bubble-bot-border: rgba(126, 184, 212, 0.1);
-  --bubble-user-bg: rgba(126, 184, 212, 0.15);
+  --bubble-user-bg: rgba(126, 184, 212, 0.15);  /* User-Nachricht – etwas kräftiger */
   --bubble-user-border: rgba(126, 184, 212, 0.2);
-  --bubble-text: #cbd5e1;
-  --fs-label: 12px;
-  --fs-caption: 13px;
-  --fs-body: 14px;
-  --fs-body-lg: 15px;
-  --fs-title-sm: 18px;
-  --fs-title-md: 24px;
-  --fs-brand: 20px;
-  --lh-copy: 1.65;
-  --tracking-tight: -0.4px;
-  --tracking-title: -0.6px;
+  --bubble-text: #cbd5e1;                       /* Text in beiden Bubbles */
+
+  /* Schriftgrößen – feste Skala statt überall freier Pixel-Wert */
+  --fs-label: 12px;     /* Labels, Caps */
+  --fs-caption: 13px;   /* kleine Erklärtexte, Beschreibungen */
+  --fs-body: 14px;      /* Standard-Text */
+  --fs-body-lg: 15px;   /* etwas prominenter, z.B. Header-Titel */
+  --fs-title-sm: 18px;  /* kleine Überschriften (Aufgabentitel) */
+  --fs-title-md: 24px;  /* Sektionsüberschriften */
+  --fs-brand: 20px;     /* Marken-/Logo-Größe */
+
+  /* Typografie-Feintuning */
+  --lh-copy: 1.65;            /* Zeilenhöhe für Fließtext (gut lesbar) */
+  --tracking-tight: -0.4px;   /* leichtes negatives Letter-Spacing für Titel */
+  --tracking-title: -0.6px;   /* etwas stärker für große Headlines */
+
+  /* Schriftarten – Sans für UI, Mono für Code */
   --font-sans: "DM Sans", "Inter", "Segoe UI", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+
+  /* Border-Radius-Skala (klein → groß, je nach Komponente) */
+  --radius-sm: 8px;   /* Buttons, Inputs */
+  --radius-md: 12px;  /* mittelgroße Karten */
+  --radius-lg: 16px;  /* Aufgaben-Knoten, große Cards */
+  --radius-xl: 20px;  /* Auth-Panel, Modals */
 }
 
+
+/* ─── 3) Design-Tokens für Light-Theme ──────────────────────────
+    Wird aktiv, sobald <html data-theme="light"> gesetzt ist.
+    Überschreibt nur die FARBEN aus :root – die Größen, Radien
+    und Fonts bleiben gleich, weil sie themenunabhängig sind.
+    ThemeToggle.jsx schaltet das Attribut um und persistiert die
+    Wahl in localStorage. */
 [data-theme="light"] {
-  --bg-primary: #f8fafc;
+  /* Hintergründe – Seite und Karten beide reines Weiß; Trennung
+     entsteht im Light-Theme über den --border statt über Farbflächen */
+  --bg-primary: #ffffff;
   --bg-secondary: #ffffff;
   --bg-card: rgba(0, 0, 0, 0.03);
   --bg-card-hover: rgba(59, 130, 180, 0.08);
@@ -59,13 +119,19 @@
   --bg-chat: rgba(0, 0, 0, 0.02);
   --border: rgba(0, 0, 0, 0.1);
   --border-accent: rgba(59, 130, 180, 0.35);
+
+  /* Akzent im Light-Theme dunkler, damit der Kontrast auf Weiß stimmt */
   --accent: #1e6b8a;
   --accent-glow: rgba(59, 130, 160, 0.12);
   --accent-gradient: linear-gradient(135deg, #1e6b8a, #2d8fb3);
+
+  /* Text-Hierarchie umgekehrt: dunkel auf hell */
   --text-primary: #0f172a;
   --text-secondary: #334155;
   --text-muted: #64748b;
   --success: #16a34a;
+
+  /* Editor- und Chat-Farben für hellen Hintergrund angepasst */
   --editor-text: #1e293b;
   --bubble-bot-bg: rgba(30, 107, 138, 0.08);
   --bubble-bot-border: rgba(30, 107, 138, 0.15);
@@ -74,6 +140,17 @@
   --bubble-text: #1e293b;
 }
 
+
+/* ─── 4) Body & #root – Viewport-Layout ──────────────────────────
+    body legt die VISUELLEN Defaults fest (Schrift, Farbe, Hintergrund),
+    #root sorgt dafür, dass der React-Container die volle Höhe bekommt.
+    Beide brauchen 100vh, weil die Höhe nicht automatisch durch die
+    Hierarchie "durchsickert" – ein Kind ohne explizite Höhe wird sonst
+    nur so groß wie sein Inhalt, und flex: 1 in Screens funktioniert
+    dann nicht mehr.
+    overflow: hidden auf body verhindert, dass die ganze Seite scrollt –
+    Scrolling passiert immer nur innerhalb einzelner Bereiche
+    (Lernpfad, Chat). */
 body {
   font-family: var(--font-sans);
   background: var(--bg-primary);
@@ -82,16 +159,23 @@ body {
   overflow: hidden;
   height: 100vh;
   width: 100%;
+  /* Subpixel-Rendering glätten, damit Text auf macOS/iOS sauber wirkt */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* React mountet in <div id="root"> – das muss die volle Größe bekommen,
+   damit darin liegende height: 100vh / flex-Layouts greifen können. */
 #root {
   height: 100vh;
   width: 100%;
 }
 
-/* Scrollbar */
+
+/* ─── 5) Scrollbar (WebKit/Blink) ────────────────────────────────
+    Schmale, fast unsichtbare Scrollbar im Brand-Look. Funktioniert in
+    Chrome, Edge, Safari, Brave. Firefox ignoriert ::-webkit-…, dort
+    wird die Standard-Scrollbar gezeigt – das ist okay. */
 ::-webkit-scrollbar {
   width: 5px;
 }
@@ -106,30 +190,52 @@ body {
   background: rgba(128, 128, 128, 0.25);
 }
 
-/* Animations */
+
+/* ─── 6) Keyframe-Animationen ────────────────────────────────────
+    Werden in JSX per inline-style verwendet:
+      style={{ animation: "fadeIn 0.2s ease" }}
+    Damit die Namen funktionieren, müssen sie hier global definiert
+    sein (Inline-CSS kann keine Keyframes deklarieren). */
+
+/* fadeUp: leichter Aufwärts-Slide + Einblenden – für Hero-Texte */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
+/* fadeIn: pures Einblenden – für Output-Panels, Konzept-Block */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* pulse: rhythmisches Auf/Ab der Deckkraft – für "denkt nach"-Indikator */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}
+
+/* slideUp: kräftigerer Slide + leichte Vergrößerung – für neue Chat-Bubbles
+   und Quick-Actions-Popup, damit sie "von unten reinpoppen" */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+
+/* ─── 7) Inputs – Placeholder & Focus-Ring ───────────────────────
+    Damit Eingabefelder sich konsistent anfühlen, ohne dass jede
+    Komponente ihren eigenen :focus-Style mitbringen muss. */
+
+/* Placeholder-Text (z.B. "Username eingeben…") in dezent grau */
 textarea::placeholder,
 input::placeholder {
   color: var(--text-muted);
 }
 
-/* Focus ring */
+/* Akzent-Border + sanfter Glow beim Klick ins Feld.
+   !important hier nötig, weil viele Inputs ihre Border per inline-style
+   setzen und die sonst Vorrang vor diesem Selector hätte. */
 input:focus,
 textarea:focus {
   border-color: var(--border-accent) !important;
