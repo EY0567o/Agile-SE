@@ -8,7 +8,7 @@
 /*mit var(--bg-primary) kann man des später bei React verwenden */
 :root {
   --bg-primary: #0b0f1a;
-  --bg-secondary: #111827;
+  --bg-secondary: #212d49;
   --bg-card: rgba(255, 255, 255, 0.03);
   --bg-card-hover: rgba(126, 184, 212, 0.06);
   --bg-editor: #0d1117;
