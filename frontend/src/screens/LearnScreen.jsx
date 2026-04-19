@@ -49,6 +49,9 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   const [running, setRunning] = useState(false);
   // loaded=false → "wird geladen..." Splash; verhindert Flackern
   const [loaded, setLoaded] = useState(false);
+  // Steuert den ausklappbaren "💡 Konzept"-Block in der Aufgaben-Ansicht.
+  // Default closed → die Erklärung drängt sich nicht auf, ist aber 1 Klick weit weg.
+  const [conceptOpen, setConceptOpen] = useState(false);
 
   // ─── Fortschritt vom Backend laden (einmalig beim Mount) ───
   // Antwort-Form: { progress: [ { taskId, code, solved }, ... ] }
@@ -125,7 +128,8 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   // openTask: Aus dem Pfad eine Aufgabe öffnen
   const openTask = (index) => {
     setSelectedTask(index);
-    setOutput(null); // alte Ausgabe von vorheriger Aufgabe entfernen
+    setOutput(null);     // alte Ausgabe von vorheriger Aufgabe entfernen
+    setConceptOpen(false); // Konzept-Block beim Wechsel wieder schließen
   };
 
   // markSolved: User klickt "Richtig gelöst" → speichern, animieren,
@@ -160,13 +164,14 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   if (selectedTask === null) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-        {/* Header: Zurück | "Lernpfad" | Progress-Bar + Theme */}
+        {/* Header: Zurück | "Lernpfad" (absolut zentriert) | Progress-Bar + Theme */}
         <div style={{
           display: "flex", alignItems: "center", padding: "0 24px",
           height: 56,
           borderBottom: "1px solid var(--border)",
           background: "var(--bg-header)",
           flexShrink: 0,
+          position: "relative",
         }}>
           <button onClick={onBack} style={{
             display: "flex", alignItems: "center", gap: 8,
@@ -185,14 +190,17 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
             />
             Zurück
           </button>
+          {/* Absolut zentrierter Titel – auf Viewport-Mitte, unabhängig von linker/rechter Spalte */}
           <div style={{
-            flex: 1, textAlign: "center", color: "var(--text-secondary)",
+            position: "absolute", left: "50%", transform: "translateX(-50%)",
+            color: "var(--text-secondary)",
             fontSize: "var(--fs-body-lg)", fontWeight: 700, letterSpacing: 0.1,
+            pointerEvents: "none",
           }}>
             Lernpfad
           </div>
           {/* Rechts: Progress-Bar (gelöste/gesamt) + Theme-Toggle */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
             <div style={{
               width: 80, height: 4, borderRadius: 2,
               background: "var(--border)", overflow: "hidden",
@@ -239,13 +247,14 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {/* Header: "Lernpfad" (= zurück) | Aufgaben-Titel | Theme */}
+      {/* Header: "Lernpfad" (= zurück) | Aufgaben-Titel (absolut zentriert) | Theme */}
       <div style={{
         display: "flex", alignItems: "center", padding: "0 24px",
         height: 56,
         borderBottom: "1px solid var(--border)",
         background: "var(--bg-header)",
         flexShrink: 0,
+        position: "relative",
       }}>
         <button onClick={handleBack} style={{
           display: "flex", alignItems: "center", gap: 8,
@@ -264,61 +273,143 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
           />
           Lernpfad
         </button>
+        {/* Absolut zentrierter Titel: zeigt im Page-Header nur "Aufgabe X".
+            Der konkrete Aufgaben-Name (z.B. "Hello World") steht im Balken
+            darunter prominent neben der Beschreibung. */}
         <div style={{
-          flex: 1, textAlign: "center", color: "var(--text-secondary)",
+          position: "absolute", left: "50%", transform: "translateX(-50%)",
+          color: "var(--text-secondary)",
           fontSize: "var(--fs-body-lg)", fontWeight: 700, letterSpacing: 0.1,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
         }}>
-          {/* "1/10"-Pille vor dem Titel */}
-          <span style={{
-            background: "var(--accent-glow)", color: "var(--accent)",
-            padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 700,
-          }}>
-            {task.id}/10
-          </span>
-          {task.title}
+          Aufgabe {task.id}
         </div>
-        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <div style={{ marginLeft: "auto" }}>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </div>
       </div>
 
       {/* Content: Aufgabentext + Editor links, Chat rechts */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {/* Aufgabenbeschreibung (oben in der linken Spalte) */}
+          {/* Aufgaben-Balken direkt unter dem Header:
+              - Links: Aufgaben-Titel (groß) + Beschreibung (klein, eine Zeile darunter)
+              - Rechts: "✓ Gelöst" / "Offen"-Marker + Konzept-Button mit 💡
+              Der Konzept-Button schaltet den ausklappbaren Erklär-Block darunter um. */}
           <div style={{
-            padding: "18px 22px",
+            padding: "14px 22px",
             borderBottom: "1px solid var(--border)",
             background: "var(--bg-card)",
+            display: "flex",
+            alignItems: "center",
+            gap: 16,
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-              <span style={{
-                background: "var(--accent-glow)", color: "var(--accent)",
-                padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
-                letterSpacing: 0.5,
-              }}>Aufgabe {task.id}</span>
-              {/* Grüner "✓ Gelöst"-Marker bei bereits gelösten Aufgaben */}
-              {isCompleted && (
-                <span style={{
-                  color: "var(--success)", fontSize: 11, fontWeight: 700,
-                  display: "flex", alignItems: "center", gap: 4,
+            {/* Links: Titel + Beschreibung untereinander */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{
+                color: "var(--text-primary)",
+                fontSize: "var(--fs-title-sm)",
+                fontWeight: 700,
+                margin: "0 0 4px",
+                letterSpacing: "var(--tracking-tight)",
+              }}>
+                {task.title}
+              </h3>
+              {task.description && (
+                <p style={{
+                  color: "var(--text-secondary)",
+                  fontSize: "var(--fs-caption)",
+                  margin: 0,
+                  lineHeight: "var(--lh-copy)",
                 }}>
-                  ✓ Gelöst
-                </span>
+                  {task.description}
+                </p>
               )}
             </div>
-            <h3 style={{
-              color: "var(--text-primary)", fontSize: "var(--fs-title-sm)", margin: "0 0 6px",
-              fontWeight: 700, letterSpacing: "var(--tracking-tight)",
-            }}>
-              {task.title}
-            </h3>
-            <p style={{
-              color: "var(--text-secondary)", fontSize: "var(--fs-body)", margin: 0, lineHeight: "var(--lh-copy)",
-            }}>
-              {task.description}
-            </p>
 
+            {/* Rechts: Gelöst-Status + Konzept-Button */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                color: isCompleted ? "var(--success)" : "var(--text-muted)",
+                fontSize: "var(--fs-caption)",
+                fontWeight: 700,
+                letterSpacing: 0.3,
+                padding: "5px 10px",
+                borderRadius: "var(--radius-sm)",
+                border: `1px solid ${isCompleted ? "rgba(74,222,128,0.3)" : "var(--border)"}`,
+                background: isCompleted ? "rgba(74,222,128,0.08)" : "transparent",
+              }}>
+                {isCompleted ? "✓ Gelöst" : "Offen"}
+              </span>
+
+              {task.explanation && (
+                <button
+                  onClick={() => setConceptOpen(!conceptOpen)}
+                  title={conceptOpen ? "Konzept ausblenden" : "Konzept anzeigen"}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    background: conceptOpen ? "var(--accent-glow)" : "transparent",
+                    border: `1px solid ${conceptOpen ? "var(--border-accent)" : "var(--border)"}`,
+                    color: conceptOpen ? "var(--accent)" : "var(--text-secondary)",
+                    fontSize: "var(--fs-caption)",
+                    padding: "5px 11px",
+                    borderRadius: "var(--radius-sm)",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    transition: "color 0.15s, border-color 0.15s, background 0.15s",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!conceptOpen) {
+                      e.currentTarget.style.color = "var(--accent)";
+                      e.currentTarget.style.borderColor = "var(--border-accent)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!conceptOpen) {
+                      e.currentTarget.style.color = "var(--text-secondary)";
+                      e.currentTarget.style.borderColor = "var(--border)";
+                    }
+                  }}
+                >
+                  <span>💡</span>
+                  <span>Konzept</span>
+                </button>
+              )}
+            </div>
           </div>
+
+          {/* Ausklappbarer Konzept-Block: erscheint nur nach Klick auf 💡 Konzept.
+              Enthält die didaktische Erklärung (task.explanation), gut lesbar
+              gesetzt. Aufgabentext steht oben im Balken bereits sichtbar. */}
+          {conceptOpen && task.explanation && (
+            <div style={{
+              padding: "14px 22px 16px",
+              background: "var(--bg-primary)",
+              borderBottom: "1px solid var(--border)",
+              animation: "fadeIn 0.2s ease",
+            }}>
+              <div style={{
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                color: "var(--accent)",
+                marginBottom: 6,
+              }}>
+                💡 Konzept
+              </div>
+              <p style={{
+                color: "var(--text-primary)",
+                fontSize: "var(--fs-body)",
+                margin: 0,
+                lineHeight: "var(--lh-copy)",
+              }}>
+                {task.explanation}
+              </p>
+            </div>
+          )}
 
           {/* Editor + Output-Panel */}
           <div style={{ flex: 1, padding: 14, display: "flex", flexDirection: "column", gap: 8, minHeight: 0 }}>
