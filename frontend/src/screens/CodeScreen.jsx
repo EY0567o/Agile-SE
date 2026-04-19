@@ -70,13 +70,14 @@ export default function CodeScreen({ onBack, theme, onToggleTheme, token }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {/* ─── Header (Zurück | Titel | Theme) ─── */}
+      {/* ─── Header (Zurück | Titel absolut zentriert | Theme) ─── */}
       <div style={{
         display: "flex", alignItems: "center", padding: "0 24px",
         height: 56,
         borderBottom: "1px solid var(--border)",
         background: "var(--bg-header)",
         flexShrink: 0,
+        position: "relative",
       }}>
         {/* Zurück-Button mit eigenem Logo */}
         <button onClick={onBack} style={{
@@ -97,14 +98,19 @@ export default function CodeScreen({ onBack, theme, onToggleTheme, token }) {
           />
           Zurück
         </button>
+        {/* Absolut zentrierter Titel – auf Viewport-Mitte */}
         <div style={{
-          flex: 1, textAlign: "center", color: "var(--text-secondary)",
+          position: "absolute", left: "50%", transform: "translateX(-50%)",
+          color: "var(--text-secondary)",
           fontSize: "var(--fs-body-lg)", fontWeight: 700, letterSpacing: 0.1,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+          whiteSpace: "nowrap",
+          pointerEvents: "none",
         }}>
           Trainingsraum – Übung macht den Meister
         </div>
-        <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        <div style={{ marginLeft: "auto" }}>
+          <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+        </div>
       </div>
 
       {/* ─── Hauptbereich (Editor links, Chat rechts) ─── */}
