@@ -4,7 +4,8 @@ Eine interaktive Lernplattform, die Anfängern hilft, Java von Grund auf zu lern
 
 ## Features
 
-- **Lernpfad** — 10 aufeinander aufbauende Java-Aufgaben (Hello World bis Klassen), sequenziell freigeschaltet
+- **Lernpfad** — 10 aufeinander aufbauende Java-Aufgaben (Hello World bis Klassen), sequenziell freigeschaltet, dargestellt als Zickzack-Pfad
+- **Konzept-Erklärungen** — pro Aufgabe ein didaktischer Hintergrund (3–5 Sätze, anfängerfreundlich), per 💡-Button in der Aufgabenansicht ausklappbar
 - **Code-Editor** — Monaco-Editor mit Java-Syntax-Highlighting (Stufe 1, ohne IDE-Ablenkungen wie Auto-Complete)
 - **Java-Ausführung** — Code wird serverseitig kompiliert und ausgeführt (`javac` / `java`)
 - **KI-Chat (CodeBuddy)** — Sokratischer Lernassistent, der abgestufte Hilfe gibt statt fertige Lösungen
@@ -94,7 +95,7 @@ AgileSE/
 │   │   │   ├── useAuth.js       # Auth-Logik (Login, Register, Logout)
 │   │   │   └── useApi.js        # API-Fetch-Wrapper mit Token
 │   │   └── data/
-│   │       └── tasks.js         # 10 Java-Lernaufgaben
+│   │       └── tasks.js         # 10 Java-Lernaufgaben mit Konzept-Erklärungen
 │   ├── index.html
 │   └── vite.config.js           # Vite-Konfiguration mit API-Proxy
 ```
