@@ -85,9 +85,6 @@ export default function AuthScreen({ onLogin, onRegister }) {
           }}>
             CodeBuddy
           </div>
-          <p style={{ color: "var(--text-muted)", fontSize: "var(--fs-body)", marginTop: 6, lineHeight: "var(--lh-copy)" }}>
-            Dein Java-Lernpartner
-          </p>
         </div>
 
         {/* Tab-Switch: Anmelden / Registrieren */}

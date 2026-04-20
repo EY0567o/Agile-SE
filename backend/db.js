@@ -4,7 +4,6 @@
 //  Verantwortlich für:
 //   - Verbindung zur SQLite-Datei (codebuddy.db)
 //   - Anlegen der Tabellen beim ersten Start (CREATE IF NOT EXISTS)
-//   - WAL-Modus für bessere Schreib-Performance
 //
 //  Wird von server.js importiert: `import db from "./db.js";`
 //  Alle SQL-Queries laufen als db.prepare(...).run() / .get() / .all()
@@ -12,14 +11,13 @@
 
 import Database from "better-sqlite3";
 import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { fileURLToPath } from "url"; //DateiURL in Pfad
 
-// __dirname ist in ESM nicht automatisch verfügbar → manuell herleiten,
-// damit die DB-Datei IMMER neben der db.js liegt (nicht im CWD).
+// In welchem Ordner ist die db.js Datei?
+//const, weil: Es bekommt einmal einen Wert und soll dannach nicht neu zugeweisen werden
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Verbindung zur SQLite-Datei öffnen. Wenn sie nicht existiert, wird
-// sie beim ersten Zugriff automatisch angelegt.
+// Verbindung zur SQLite-Datei öffnen. Wenn sie nicht existiert, wird sie beim ersten Zugriff automatisch angelegt.
 const db = new Database(join(__dirname, "codebuddy.db"));
 
 // WAL (Write-Ahead Logging) erlaubt gleichzeitiges Lesen/Schreiben
@@ -27,6 +25,7 @@ const db = new Database(join(__dirname, "codebuddy.db"));
 db.pragma("journal_mode = WAL");
 
 // ─── Tabellen anlegen (nur falls nicht vorhanden) ─────────────
+//db.exec: Führen sie den befehl direkt aus
 db.exec(`
   -- users: Eine Zeile pro registriertem Nutzer
   CREATE TABLE IF NOT EXISTS users (
@@ -49,4 +48,5 @@ db.exec(`
   );
 `);
 
+//Andere haben Zugriff auf die DB
 export default db;

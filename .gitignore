@@ -1,5 +1,8 @@
 .claude/
 
+# Lokale Dokumentation (nicht im Repo)
+docs/
+
 # SQLite-Datenbankdateien (werden zur Laufzeit erzeugt/aktualisiert)
 backend/*.db
 backend/*.db-wal

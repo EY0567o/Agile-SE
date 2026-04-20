@@ -18,8 +18,12 @@
 //     Ohne API-Key antworten Chat-Endpoints mit 503.
 // ══════════════════════════════════════════════════════════════════
 
+//Node.js - Backend mit JS schreiben
+
 import OpenAI from "openai";
+//FE kann an BE schicken
 import cors from "cors";
+//Macht Server bauen einfacher
 import express from "express";
 import { execFile } from "child_process";         // für javac/java aufrufen
 import { writeFile, mkdir, rm } from "fs/promises";
@@ -35,9 +39,9 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // CORS: Wir erlauben nur Anfragen vom Vite-Dev-Server (Port 5173),
-// damit uns fremde Seiten nicht einfach Anfragen schicken können.
+// damit uns fremde Seiten nicht einfach Anfragen schicken können, ist nur 5173 erlaubt
 app.use(cors({ origin: "http://localhost:5173" }));
-app.use(express.json()); // Middleware, damit req.body als JSON geparst wird
+app.use(express.json()); // JSON kann gelesen werden
 
 
 const openai = process.env.OPENAI_API_KEY ? new OpenAI() : null;
@@ -54,6 +58,9 @@ const sessions = new Map();
 //   2. Existiert dieser Token in unserer sessions-Map?
 // Bei Erfolg: req.user = { userId, username } setzen → weiter mit next()
 // Bei Fehler: 401 zurückgeben → Frontend loggt den User aus
+
+//Ist der User eingeloggt?
+//
 function auth(req, res, next) {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {

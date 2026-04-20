@@ -150,7 +150,7 @@ input::placeholder {
   color: var(--text-muted);
 }
 
-/* Focus ring */
+/* Focus ring, wenn man in ein eingabefeld draufdrückt, dieser Rahmen drumherum*/
 input:focus,
 textarea:focus {
   border-color: var(--border-accent) !important;
