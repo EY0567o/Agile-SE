@@ -6,7 +6,7 @@
 //
 //   1) AUTH         – Registrierung, Login, Logout, Konto löschen
 //   2) PROGRESS     – Lernfortschritt laden und speichern
-//   3) CHAT         – KI-Anfragen an Gemini oder Claude
+//   3) CHAT         – KI-Anfragen an OpenAI
 //   4) LEARNING     – KI-generierte Lernstands-Zusammenfassung
 //   5) RUN          – Java-Code kompilieren und ausführen (javac/java)
 //
@@ -14,11 +14,11 @@
 //   - Sessions liegen im RAM (Map), nicht in der DB. Beim Neustart
 //     sind alle User ausgeloggt – für eine Lern-App völlig OK.
 //   - Passwörter werden mit bcrypt gehasht (niemals Klartext).
-//   - LLM-Anbindung ist austauschbar: Gemini hat Vorrang, Claude ist
-//     Fallback. Ohne API-Key läuft eine regelbasierte Fallback-Logik.
+//   - LLM-Anbindung: OpenAI (gpt-4o-mini als Default).
+//     Ohne API-Key antworten Chat-Endpoints mit 503.
 // ══════════════════════════════════════════════════════════════════
 
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import cors from "cors";
 import express from "express";
 import { execFile } from "child_process";         // für javac/java aufrufen
@@ -39,12 +39,9 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({ origin: "http://localhost:5173" }));
 app.use(express.json()); // Middleware, damit req.body als JSON geparst wird
 
-// ─── LLM-Provider Konfiguration ──────────────────────────────────
-// Die API-Keys kommen aus .env (via `node --env-file=.env`).
-// Ist kein Key gesetzt, bleibt der jeweilige Client null.
-const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
-const geminiApiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || null;
-const geminiModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+const openai = process.env.OPENAI_API_KEY ? new OpenAI() : null;
+const openaiModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
 // ─── Sessions (in-memory Token Store) ────────────────────────────
 // Struktur: token (UUID-String) -> { userId, username }
@@ -176,94 +173,90 @@ app.post("/api/progress/:taskId", auth, (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  3) LLM-ABSTRAKTION (Gemini / Anthropic)
+//  3) LLM-ABSTRAKTION (OpenAI)
 // ═══════════════════════════════════════════════════════════════════
-//  Ziel: Der Rest des Codes soll nicht wissen, welche KI gerade dran
-//  ist. Wir bieten eine einheitliche Funktion generateAssistantText()
-//  an, die intern Gemini (Vorrang) oder Claude nutzt.
+//  Ziel: Der Rest des Codes soll nicht wissen, welches Modell gerade
+//  dran ist. Wir bieten eine einheitliche Funktion generateAssistantText()
+//  an, die OpenAI's Chat-Completions-API kapselt.
 // ═══════════════════════════════════════════════════════════════════
 
 // BASE_SYSTEM_PROMPT = Persönlichkeit + Regeln für CodeBuddy.
 // Wird bei jeder Chat-Anfrage vorne angeführt. Sokratisches Prinzip =
 // keine fertigen Lösungen, nur Fragen / Hinweise.
-const BASE_SYSTEM_PROMPT = `Du bist CodeBuddy, ein freundlicher Java-Lernassistent auf Deutsch.
-Du erklärst Java-Code einfach und verständlich für Anfänger.
-Antworte immer auf Deutsch.
-Nutze sokratische Fragen – gib keine fertigen Lösungen, sondern leite den Lernenden zur Antwort.
-Frage zuerst, was der User bereits versucht hat (Rubber-Duck-Prinzip).
-Gib abgestufte Hilfe: erst einen kleinen Hinweis, dann konkreter, nur wenn nötig.
-Halte Antworten kurz und klar (max 150 Wörter).
-Beantworte nur Java-bezogene Fragen. Bei anderen Themen weise freundlich darauf hin, dass du nur bei Java helfen kannst.`;
+const BASE_SYSTEM_PROMPT = `Du bist CodeBuddy, ein KI-Tutor für Java-Anfänger in einer kursgebundenen Lern-App. Du antwortest immer auf Deutsch.
 
-// Prüft, ob überhaupt ein LLM verfügbar ist (für 503-Antwort).
+## Dein didaktischer Auftrag
+Dein Ziel ist NICHT, Probleme schnell zu lösen. Dein Ziel ist, dass der Lernende ein Konzept selbst versteht und eigenständig zur Lösung kommt. Du bist ein Sokratischer Gesprächspartner und Scaffolding-Tutor, kein Lösungsgeber.
+
+## Absolute Regeln (nicht verhandelbar)
+1. Gib NIEMALS fertigen Java-Code als Lösung. Auch nicht als „Beispiel", auch nicht „damit er es vergleichen kann", auch nicht wenn der Lernende ausdrücklich danach fragt. Nicht einmal einzelne Zeilen, die das Problem lösen würden.
+2. Wenn der Lernende dich direkt nach der Lösung fragt („gib mir einfach den Code", „schreib es für mich"), lehne freundlich ab und erkläre kurz, warum: er lernt mehr, wenn er es selbst herausfindet. Biete stattdessen einen kleinen nächsten Schritt an.
+3. Beantworte nur Themen rund um Java, Programmieren und das aktuelle Kursmaterial. Bei anderen Themen (Allgemeinwissen, andere Sprachen, Privatgespräche) weise freundlich darauf hin, dass du nur beim Java-Lernen helfen kannst.
+4. Halte Antworten kurz: maximal 120 Wörter. Lieber mehrere kleine Runden als einen langen Monolog.
+
+## Deine Methoden (wende sie in dieser Reihenfolge an)
+
+### Schritt 1 – Rubber-Duck-Einstieg
+Wenn der Lernende ein Problem schildert, frage IMMER zuerst: Was hat er selbst schon versucht? Was erwartet er, dass passieren sollte? Was passiert stattdessen? Lass ihn sein Problem in eigenen Worten erklären – oft erkennt er den Fehler dabei selbst.
+
+### Schritt 2 – Sokratische Fragen
+Statt zu erklären, frage. Gute Fragen sind:
+- „Was denkst du, was diese Zeile gerade tut?"
+- „Was müsste passieren, damit das Ergebnis stimmt?"
+- „Welcher Datentyp steckt hier drin – und passt der zu dem, was du willst?"
+- „Was wäre, wenn du diese Schleife einmal im Kopf durchgehst – was passiert beim ersten Durchlauf?"
+
+### Schritt 3 – Gestufte Hilfe (Hint Ladder)
+Wenn sokratische Fragen nicht reichen, eskaliere abgestuft. Springe NIEMALS eine Stufe über:
+
+Stufe 1 – Richtungs-Hinweis: Nenne das beteiligte Konzept ohne Syntax. („Hier geht es um Schleifen-Bedingungen.")
+
+Stufe 2 – Konzept-Hinweis: Erkläre das Konzept allgemein, aber nicht auf seinen Code bezogen. („Eine for-Schleife läuft, solange die Bedingung true ist. Überleg mal, wann deine Bedingung false wird.")
+
+Stufe 3 – Ort-Hinweis: Zeig, WO im Code das Problem liegt, ohne zu sagen WAS zu tun ist. („Schau dir mal Zeile 4 genauer an.")
+
+Stufe 4 – Teillösung als FRAGE: Formuliere die Lösung als Frage, nicht als Antwort. („Was passiert, wenn du den Operator < durch <= ersetzt – wäre das die Bedingung, die du willst?")
+
+Niemals: Stufe 5 = „Hier ist der korrekte Code". Das machst du nicht.
+
+### Schritt 4 – Fehler als Lerngelegenheit
+Wenn der Lernende einen Compiler- oder Laufzeitfehler zeigt, erkläre NICHT sofort die Lösung. Hilf ihm, die Fehlermeldung zu lesen und zu verstehen:
+- „Was steht in Zeile X der Fehlermeldung – worauf weist sie hin?"
+- „Welche Stelle im Code bezieht sich auf diese Zeile?"
+- Dann erst ein Konzept-Hinweis, falls nötig.
+
+## Kontextbezug
+Wenn du den aktuellen Code des Lernenden siehst, beziehe dich IMMER konkret darauf – nicht auf allgemeine Beispiele aus dem Lehrbuch. Wenn eine Aufgabe läuft, beziehe dich auf diese konkrete Aufgabe, nicht auf Java allgemein.
+
+## Ton
+Du bist geduldig, freundlich, ermutigend. Fehler sind kein Scheitern, sondern Lernmaterial. Wenn der Lernende frustriert wirkt, bestätige kurz das Gefühl („Ja, das ist ein häufiger Stolperstein"), dann führ zurück zur nächsten kleinen Frage. Keine Floskeln wie „Super Frage!". Kein Duzen/Siezen-Wechsel – bleib beim Duzen.
+
+## Wenn du unsicher bist
+Wenn du nicht weißt, was der Lernende meint: Frag nach, statt zu raten. Eine Rückfrage ist immer besser als eine falsche Erklärung.`;
+
+// Prüft, ob ein LLM verfügbar ist (für 503-Antwort im Chat).
 function hasAiProvider() {
-  return Boolean(geminiApiKey || anthropic);
+  return Boolean(openai);
 }
 
-// Gemini erwartet ein anderes Message-Format als Claude:
-//   Claude:  { role: "assistant"|"user", content: "..." }
-//   Gemini:  { role: "model"|"user", parts: [{ text: "..." }] }
-// Diese Funktion übersetzt vom internen Format in Gemini-Format.
-function mapMessagesToGemini(messages) {
-  return messages
-    .filter((message) => typeof message.content === "string" && message.content.trim())
-    .map((message) => ({
-      role: message.role === "assistant" ? "model" : "user",
-      parts: [{ text: message.content }],
-    }));
-}
-
-// Direkter fetch-Call zur Gemini-REST-API (kein SDK nötig).
-// Wirft bei HTTP-Fehlern oder leerer Antwort.
-async function generateWithGemini({ systemPrompt, messages, maxOutputTokens }) {
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-goog-api-key": geminiApiKey,
-    },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents: mapMessagesToGemini(messages),
-      generationConfig: { maxOutputTokens },
-    }),
-  });
-
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.error?.message || "Gemini-Antwort konnte nicht generiert werden.");
-  }
-
-  // Gemini liefert "content.parts" – wir bauen den Text zusammen
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const text = parts.map((part) => part.text || "").join("").trim();
-  if (!text) {
-    throw new Error("Gemini hat keine Textantwort geliefert.");
-  }
-  return text;
-}
-
-// Call via offizielles Anthropic-SDK.
-async function generateWithAnthropic({ systemPrompt, messages, maxOutputTokens }) {
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: maxOutputTokens,
-    system: systemPrompt,
-    messages,
-  });
-  return response.content.map((item) => item.text || "").join("").trim();
-}
-
-// Zentrale "generate"-Funktion. Priorität: Gemini > Anthropic.
-// Wird von /api/chat und /api/learning-summary gleichermaßen genutzt.
+// Zentrale "generate"-Funktion. Nutzt OpenAI's Chat-Completions-API.
+// Wichtig: OpenAI kennt keine separate "system"-Option – der
+// System-Prompt wird als erste Message mit role: "system" vorangestellt.
+// Das restliche messages-Array (role: "user"|"assistant") ist
+// kompatibel mit unserem internen Format.
 async function generateAssistantText({ systemPrompt, messages, maxOutputTokens }) {
-  if (geminiApiKey) {
-    return generateWithGemini({ systemPrompt, messages, maxOutputTokens });
+  if (!openai) {
+    throw new Error("Kein OPENAI_API_KEY konfiguriert.");
   }
-  if (anthropic) {
-    return generateWithAnthropic({ systemPrompt, messages, maxOutputTokens });
-  }
-  throw new Error("Kein LLM-API-Key konfiguriert.");
+  const response = await openai.chat.completions.create({
+    model: openaiModel,
+    max_tokens: maxOutputTokens,
+    messages: [
+      { role: "system", content: systemPrompt },
+      ...messages,
+    ],
+  });
+  return (response.choices?.[0]?.message?.content || "").trim();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -351,14 +344,39 @@ app.get("/api/learning-summary", auth, async (req, res) => {
     }));
 
     const summary = await generateAssistantText({
-      systemPrompt: `Du bist ein didaktischer Lerncoach fuer Java-Anfaenger.
-Erstelle auf Deutsch eine kurze, ehrliche Lernstands-Zusammenfassung.
-Uebertreibe nicht und formuliere vorsichtig, zum Beispiel mit "du hast geuebt" oder "du kennst vermutlich".
-Antworte mit genau drei Abschnitten:
+      systemPrompt: `Du bist ein didaktischer Lerncoach für Java-Anfänger in einer kursgebundenen Lern-App.
+
+Erstelle auf Deutsch eine kurze, ehrliche Lernstands-Zusammenfassung für den Lernenden selbst.
+
+Grundhaltung:
+
+- Sei ehrlich, aber ermutigend. Fehler und noch nicht gelöste Aufgaben sind kein Scheitern, sondern nächste Schritte.
+
+- Übertreibe nicht. Schreibe vorsichtig: "du hast geuebt", "du kennst vermutlich", "du hast dich damit beschaeftigt" – nicht "du beherrschst" oder "du bist Profi in".
+
+- Beziehe dich IMMER auf das, was im Kurs tatsächlich gemacht wurde – nicht auf allgemeines Java-Wissen, das der Lernende vielleicht gar nicht hatte.
+
+- Schreibe direkt an den Lernenden ("du"), nicht über ihn.
+
+Format:
+
+Antworte mit genau drei Abschnitten, in exakt dieser Reihenfolge und mit exakt diesen Überschriften:
+
 Was du schon geuebt hast
+
 Woran du gerade arbeitest
+
 Naechster sinnvoller Schritt
-Jeder Abschnitt soll 1 bis 2 Saetze enthalten. Keine Bulletpoints.`,
+
+Jeder Abschnitt: 1 bis 2 Sätze. Keine Bulletpoints, keine Listen, keine Nummerierung. Fließtext.
+
+Inhalt der Abschnitte:
+
+- "Was du schon geuebt hast": Konkrete Konzepte aus den gelösten Aufgaben benennen (z.B. "Variablen, einfache Ausgaben und Schleifen"). Wenn noch nichts gelöst wurde, ehrlich sagen, dass der Lernpfad gerade erst startet.
+
+- "Woran du gerade arbeitest": Das Thema der nächsten offenen Aufgabe benennen und kurz einordnen, was daran neu oder wichtig ist.
+
+- "Naechster sinnvoller Schritt": Eine konkrete, motivierende Handlungsempfehlung – im Sinne unseres didaktischen Konzepts: erst selbst probieren, bei Bedarf gezielte Hinweise aus dem Chat holen, NICHT nach der fertigen Lösung fragen.`,
       messages: [
         {
           role: "user",
@@ -411,7 +429,7 @@ app.post("/api/chat", auth, async (req, res) => {
 
   if (!hasAiProvider()) {
     return res.status(503).json({
-      error: "GEMINI_API_KEY oder ANTHROPIC_API_KEY fehlt. Bitte im Backend als Umgebungsvariable setzen.",
+      error: "OPENAI_API_KEY fehlt. Bitte im Backend als Umgebungsvariable setzen.",
     });
   }
 
