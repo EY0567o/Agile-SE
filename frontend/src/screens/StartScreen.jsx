@@ -43,8 +43,8 @@ const DEMO_CODE = `public class Main {
 
 // Haupt-Navigation: Key wird an onNavigate() gegeben, das App.jsx schaltet
 const NAV_ITEMS = [
-  { key: "learn", label: "Lernpfad",      iconSrc: "/Logo_lernpfad.png",      iconAlt: "Lernpfad Logo" },
-  { key: "code",  label: "Trainingsraum", iconSrc: "/Logo_Trainingsraum.png", iconAlt: "Trainingsraum Logo" },
+  { key: "learn", label: "Lernpfad" },
+  { key: "code",  label: "Trainingsraum" },
 ];
 
 export default function StartScreen({ onNavigate, theme, onToggleTheme, username, onLogout, onDeleteAccount, token }) {
@@ -170,24 +170,6 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
                 transition: "all 0.2s",
               }}
             >
-              {/* Icon entweder als Bild oder als Fallback-Textsymbol */}
-              {item.iconSrc ? (
-                <img
-                  src={item.iconSrc}
-                  alt={item.iconAlt}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    objectFit: "contain",
-                    opacity: 0.85,
-                  }}
-                />
-              ) : (
-              <span style={{
-                  fontFamily: "var(--font-mono)", fontSize: 12,
-                  opacity: 0.7,
-                }}>{item.icon}</span>
-              )}
               {item.label}
             </button>
           ))}
@@ -212,26 +194,6 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
               whiteSpace: "nowrap",
             }}
           >
-            <span style={{
-              width: 40,
-              height: 40,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              overflow: "hidden",
-              flexShrink: 0,
-            }}>
-              <img
-                src="/logo_was%20kann%20ich%20schon.png"
-                alt="Was kann ich schon Logo"
-                style={{
-                  width: 40,
-                  height: 40,
-                  objectFit: "contain",
-                  opacity: 0.85,
-                }}
-              />
-            </span>
             Was kann ich schon?
           </button>
 
