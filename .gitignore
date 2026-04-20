@@ -3,6 +3,9 @@
 # Lokale Dokumentation (nicht im Repo)
 docs/
 
+# npm-Abhängigkeiten (werden via npm install regeneriert)
+node_modules/
+
 # SQLite-Datenbankdateien (werden zur Laufzeit erzeugt/aktualisiert)
 backend/*.db
 backend/*.db-wal
