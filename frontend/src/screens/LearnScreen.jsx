@@ -134,13 +134,15 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
 
   // markSolved: User klickt "Richtig gelöst" → speichern, animieren,
   // freischalten (falls aktuell), zurück zum Pfad.
-  const markSolved = () => {
+    const markSolved = () => {
+    // Guard: während der Animation läuft, darf markSolved nicht
+    // erneut starten – sonst schaltet ein zweiter Klick auf den
+    // "✓ Weiter!"-Button eine zusätzliche Aufgabe frei.
+    if (completedAnim) return;
     setCompletedAnim(true);
     saveProgress(selectedTask, codes[selectedTask], true);
     setTimeout(() => {
       setCompletedAnim(false);
-      // Nur die aktuell höchste Aufgabe schaltet die nächste frei
-      // (Re-Klick auf bereits gelöste Aufgabe → keine Doppel-Erhöhung)
       if (selectedTask === unlockedUpTo) {
         setUnlockedUpTo((u) => u + 1);
       }
@@ -491,6 +493,7 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
             taskTitle={task.title}
             taskDescription={task.description}
             taskHint={task.hint}
+            errorOutput={output && !output.success ? output.output : null}
           />
         </div>
       </div>

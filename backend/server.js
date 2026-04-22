@@ -33,6 +33,7 @@ import { randomUUID } from "crypto";               // für Session-Tokens + Temp
 import bcrypt from "bcryptjs";
 import db from "./db.js";
 import TASKS from "../frontend/src/data/tasks.js"; // Lernaufgaben werden auch im Backend für KI-Kontext gebraucht
+import { VORLESUNGSFOLIEN } from "./data/vorlesungen.js";
 
 // ─── Grund-Setup ─────────────────────────────────────────────────
 const app = express();
@@ -239,7 +240,25 @@ Wenn du den aktuellen Code des Lernenden siehst, beziehe dich IMMER konkret dara
 Du bist geduldig, freundlich, ermutigend. Fehler sind kein Scheitern, sondern Lernmaterial. Wenn der Lernende frustriert wirkt, bestätige kurz das Gefühl („Ja, das ist ein häufiger Stolperstein"), dann führ zurück zur nächsten kleinen Frage. Keine Floskeln wie „Super Frage!". Kein Duzen/Siezen-Wechsel – bleib beim Duzen.
 
 ## Wenn du unsicher bist
-Wenn du nicht weißt, was der Lernende meint: Frag nach, statt zu raten. Eine Rückfrage ist immer besser als eine falsche Erklärung.`;
+Wenn du nicht weißt, was der Lernende meint: Frag nach, statt zu raten. Eine Rückfrage ist immer besser als eine falsche Erklärung.
+
+## Vorlesungsfolien (nur bei expliziter Nachfrage nutzen)
+Du hast Zugriff auf die Vorlesungsfolien des Kurses, aber nutze sie sehr gezielt:
+
+- Verwende die Folien NUR, wenn der Lernende klar danach fragt: „Wo steht das in den Folien?", „In welcher Folie war das?", „Das stand doch in der Vorlesung – wo?", „Zeig mir die Stelle aus den Folien", „Gibt es dazu was im Skript?".
+- Bei allen anderen Fragen (Code-Hilfe, Fehlermeldungen, Konzepte verstehen) IGNORIERE die Folien komplett. Antworte wie immer sokratisch und nach den Regeln der Hint Ladder. Verweise NIEMALS unaufgefordert auf Folien.
+- Wenn du die Folien nutzt: Nenne konkret die Foliennummer und den Titel im Format „Das wird in Folie X (»Titel«) behandelt" und fasse den Inhalt der Folie kurz in eigenen Worten zusammen. Kein reines Zitieren ganzer Folien-Abschnitte.
+- Wenn der Lernende fragt „wo steht das", das Thema aber in KEINER der Folien direkt auftaucht: sag ehrlich „Das Thema taucht in den Folien nicht direkt auf – möchtest du, dass ich es dir trotzdem kurz einordne?"
+- Erfinde NIEMALS Foliennummern oder Inhalte, die nicht in den dir übergebenen Folien stehen. Wenn du unsicher bist, welche Folie passt, frag lieber nach, was der Lernende genau sucht.
+- Die Folien-Referenz ersetzt NICHT deine didaktischen Regeln. Auch wenn der Lernende nach einer Folie fragt, gib ihm trotzdem keine fertige Code-Lösung – verweise auf die Folie und bleib beim sokratischen Prinzip für den Problemlöse-Teil.`;
+
+// Formatiert alle Folien kompakt für den System-Prompt.
+// Wird NUR aufgerufen, wenn der User tatsächlich nach den Folien fragt.
+function folienAlsText() {
+  return VORLESUNGSFOLIEN
+    .map(f => `[Folie ${f.nr} – "${f.titel}"]\n${f.text}`)
+    .join("\n\n");
+}
 
 // Prüft, ob ein LLM verfügbar ist (für 503-Antwort im Chat).
 function hasAiProvider() {
@@ -456,6 +475,21 @@ app.post("/api/chat", auth, async (req, res) => {
     if (taskDescription) systemPrompt += `\n- Aufgabenbeschreibung: ${taskDescription}`;
     if (taskHint)        systemPrompt += `\n- Hinweis zur Aufgabe: ${taskHint}`;
     systemPrompt += `\nPasse deine Erklärungen an das Niveau des Lernenden an.`;
+  }
+
+  // ── Folien-Kontext nur bei expliziter Anfrage mitschicken ──
+  // Spart Tokens bei "normalen" Fragen und verhindert, dass der
+  // Bot unaufgefordert auf Folien verweist.
+  const letzteUserNachricht = messages[messages.length - 1]?.content?.toLowerCase() || "";
+  const foliensignale = [
+    "folie", "folien", "vorlesung", "vorlesungen",
+    "wo steht", "wo wurde", "wo haben wir", "in welcher",
+    "script", "skript", "unterlagen",
+  ];
+  const fragtNachFolien = foliensignale.some(s => letzteUserNachricht.includes(s));
+
+  if (fragtNachFolien) {
+    systemPrompt += `\n\n## AKTUELL VERFÜGBARE VORLESUNGSFOLIEN\n\n${folienAlsText()}`;
   }
 
   // ── (2) Code an die LETZTE User-Message hängen ──

@@ -24,7 +24,7 @@ import ChatBubble from "./ChatBubble";
 import QuickActions from "./QuickActions";
 import useApi from "../hooks/useApi";
 
-export default function ChatPanel({ code, greeting, token, taskId, taskTitle, taskDescription, taskHint }) {
+export default function ChatPanel({ code, greeting, token, taskId, taskTitle, taskDescription, taskHint, errorOutput }) {
   const apiFetch = useApi(token);
 
   // Messages-State: erste Nachricht ist die Begrüßung (persist:false,
@@ -45,21 +45,33 @@ export default function ChatPanel({ code, greeting, token, taskId, taskTitle, ta
   // sendMessage: Einheitliche Funktion für Tippen + QuickAction-Klick
   //   overrideText: Wenn gesetzt (QuickAction), wird dieser Text statt
   //                 des Input-Feldes verwendet
-  const sendMessage = async (overrideText) => {
+    const sendMessage = async (overrideText, isErrorAction = false) => {
+    // Spezialfall: "Fehlermeldung erklären" ohne aktuelle Fehlermeldung
+    // → lokal antworten, kein API-Call
+    if (isErrorAction && !errorOutput) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", text: "Fehlermeldung erklären", persist: false },
+        { role: "bot", text: "Keine Fehlermeldung vorhanden. Führe deinen Code erst aus – sobald ein Fehler auftritt, kann ich ihn dir erklären.", persist: false },
+      ]);
+      return;
+    }
+
     const userText = overrideText || input.trim();
-    // Ohne Text UND ohne Code → nichts zu senden
     if (!userText && !code) return;
-    // Wenn nur Code vorhanden, nutzen wir eine Standard-Frage
-    const finalText = userText || "Erkläre meinen Code.";
+    let finalText = userText || "Erkläre meinen Code.";
+
+    // Bei "Fehlermeldung erklären" die aktuelle Fehlermeldung anhängen,
+    // damit die KI sie im Klartext sieht.
+    if (isErrorAction && errorOutput) {
+      finalText += `\n\nHier ist die Fehlermeldung:\n\`\`\`\n${errorOutput}\n\`\`\``;
+    }
 
     const newUserMsg = { role: "user", text: finalText };
     setMessages((prev) => [...prev, newUserMsg]);
     setInput("");
     setLoading(true);
 
-    // History für die KI aufbauen:
-    //   - persist:false Nachrichten rausfiltern (Begrüßung, Fehler)
-    //   - unser internes "bot" in das API-Format "assistant" mappen
     const history = [...messages, newUserMsg]
       .filter((m) => m.persist !== false)
       .map((m) => ({
@@ -76,8 +88,6 @@ export default function ChatPanel({ code, greeting, token, taskId, taskTitle, ta
       if (!res.ok) throw new Error(data.error || "Unbekannter Fehler");
       setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
     } catch (err) {
-      // Fehlermeldungen werden nur lokal angezeigt, nicht in die
-      // API-History übernommen → persist:false
       setMessages((prev) => [
         ...prev,
         { role: "bot", text: err.message || "Verbindungsfehler – bitte versuche es erneut.", persist: false },
@@ -120,7 +130,7 @@ export default function ChatPanel({ code, greeting, token, taskId, taskTitle, ta
         borderTop: "1px solid var(--border)",
         alignItems: "center",
       }}>
-        <QuickActions onSelect={(prompt) => sendMessage(prompt)} disabled={loading} />
+        <QuickActions onSelect={(action) => sendMessage(action.prompt, action.id === "error")} disabled={loading} />
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}

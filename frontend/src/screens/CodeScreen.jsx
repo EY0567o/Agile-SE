@@ -158,9 +158,9 @@ export default function CodeScreen({ onBack, theme, onToggleTheme, token }) {
         <div style={{ width: 400, flexShrink: 0 }}>
           <ChatPanel
             code={code}
-            // Im Free-Modus gibt es keine Aufgabe → nur generische Begrüßung
             greeting="Hey! Füge deinen Java-Code links ein und ich erkläre ihn dir. Was möchtest du wissen?"
             token={token}
+            errorOutput={output && !output.success ? output.output : null}
           />
         </div>
       </div>
