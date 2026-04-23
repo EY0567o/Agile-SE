@@ -20,11 +20,10 @@ import { useState, useRef, useEffect } from "react";
 // Liste der Schnellaktionen. icon = kurzes Symbol für die Liste.
 // prompt = der Text, der an die KI geschickt wird.
 const ACTIONS = [
-  { id: "error", label: "Fehlermeldung erklären", icon: "!", prompt: "Ich habe eine Fehlermeldung in meinem Code. Kannst du mir erklären, was sie bedeutet und wie ich sie beheben kann?" },
-  { label: "Code erklären",          icon: "?", prompt: "Erkläre mir meinen aktuellen Code Schritt für Schritt." },
-  { label: "Hint geben",             icon: "💡", prompt: "Gib mir einen kleinen Hinweis, wie ich die Aufgabe lösen kann – aber nicht die Lösung!" },
-  { label: "Was habe ich falsch?",   icon: "×", prompt: "Schau dir meinen Code an – was habe ich falsch gemacht? Stelle mir Rückfragen, damit ich selbst drauf komme." },
-  { label: "Konzept erklären",       icon: "📖", prompt: "Erkläre mir das Java-Konzept, das in meinem Code verwendet wird, anhand eines einfachen Beispiels." },
+  { id: "error",   label: "Fehlermeldung erklären", icon: "!",  prompt: "Erkläre mir die folgende Fehlermeldung in einfacher, menschlicher Sprache. Was sagt sie konkret aus? Gib KEINE Lösung und erkläre auch nicht, wie ich sie beheben kann – übersetze die Meldung nur verständlich." },
+  { id: "hint",    label: "Tipp geben",             icon: "💡", prompt: "Gib mir einen kleinen Tipp zur aktuellen Aufgabe – nur einen sanften Denkanstoß. Verrate nichts direkt, keine Lösung und keinen Code." },
+  { id: "lecture", label: "Vorlesung",              icon: "📖", prompt: "Wo steht das Thema der aktuellen Aufgabe in den Vorlesungsfolien?" },
+  { id: "concept", label: "Konzept erklären", icon: "📚", prompt: "Erkläre mir das Java-Konzept, das hinter der aktuellen Aufgabe steckt – allgemein und ohne direkten Bezug zu meiner Lösung. Kein Code, der die Aufgabe löst." },
 ];
 
 export default function QuickActions({ onSelect, disabled }) {
