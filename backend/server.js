@@ -242,6 +242,15 @@ Du bist geduldig, freundlich, ermutigend. Fehler sind kein Scheitern, sondern Le
 ## Wenn du unsicher bist
 Wenn du nicht weißt, was der Lernende meint: Frag nach, statt zu raten. Eine Rückfrage ist immer besser als eine falsche Erklärung.
 
+## Ampelsystem (PFLICHT bei jeder Antwort)
+Beginne JEDE deiner Antworten mit einem farbigen Ampel-Emoji, das deine Sicherheit zur Antwort anzeigt. Das Emoji steht ganz am Anfang der Nachricht, direkt vor dem ersten Wort, ohne weitere Erklärung dahinter. Die Bedeutung ist:
+
+- 🟢 (grün): Ich bin mir vollkommen sicher, dass meine Antwort stimmt – inhaltlich, syntaktisch und auch bezüglich der Vorlesungsfolien. Nur verwenden, wenn du wirklich KEINEN Zweifel hast.
+- 🟡 (gelb): Ich bin mir überwiegend sicher, aber es gibt Restzweifel – z.B. weil das Thema nur am Rand in den Folien steht, weil die Frage mehrdeutig ist oder weil es mehrere gangbare Wege gibt.
+- 🔴 (rot): Ich bin mir nicht sicher. Entweder fehlt mir Kontext, das Thema taucht in den Folien nicht direkt auf, oder meine Antwort ist eine begründete Vermutung. Bei 🔴 sagst du zusätzlich kurz in einem Satz, WORAUF sich die Unsicherheit bezieht.
+
+Das Ampel-Emoji gilt für die gesamte Antwort, nicht nur für einen Teil davon. Wenn du nur eine Rückfrage stellst (z.B. nach dem Rubber-Duck-Prinzip) und noch gar keine inhaltliche Aussage triffst, nutze 🟢 – eine Rückfrage ist nie falsch.
+
 ## Vorlesungsfolien (nur bei expliziter Nachfrage nutzen)
 Du hast Zugriff auf die Vorlesungsfolien des Kurses, aber nutze sie sehr gezielt:
 
@@ -573,8 +582,15 @@ app.post("/api/run", auth, async (req, res) => {
     // ── Kompilieren (javac) ──
     const compileResult = await new Promise((resolve) => {
       execFile("javac", [`${className}.java`], { cwd: workDir, timeout: 10000 }, (err, stdout, stderr) => {
-        if (err) resolve({ success: false, output: stderr || err.message });
-        else     resolve({ success: true, output: stdout });
+        // stdout UND stderr zusammenführen – sonst gehen Warnungen/Teilausgaben verloren
+        const combined = [stdout, stderr].filter(Boolean).join("\n").trim();
+        if (err?.killed && err.signal === "SIGTERM") {
+          resolve({ success: false, output: "Zeitueberschreitung beim Kompilieren (10s)." });
+        } else if (err) {
+          resolve({ success: false, output: combined || err.message });
+        } else {
+          resolve({ success: true, output: combined });
+        }
       });
     });
 
@@ -586,8 +602,16 @@ app.post("/api/run", auth, async (req, res) => {
     // ── Ausführen (java) ──
     const runResult = await new Promise((resolve) => {
       execFile("java", [className], { cwd: workDir, timeout: 10000 }, (err, stdout, stderr) => {
-        if (err) resolve({ success: false, output: stderr || err.message });
-        else     resolve({ success: true, output: stdout });
+        // stdout UND stderr zusammenführen – bei Crashes geht sonst die Ausgabe VOR dem Crash verloren,
+        // bei Exit-Code 0 geht sonst ein System.err.println(...) verloren
+        const combined = [stdout, stderr].filter(Boolean).join("\n").trim();
+        if (err?.killed && err.signal === "SIGTERM") {
+          resolve({ success: false, output: "Zeitueberschreitung (10s). Moeglicherweise eine Endlosschleife?" });
+        } else if (err) {
+          resolve({ success: false, output: combined || err.message });
+        } else {
+          resolve({ success: true, output: combined });
+        }
       });
     });
 

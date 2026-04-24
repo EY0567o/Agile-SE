@@ -36,10 +36,10 @@ export default function AuthScreen({ onLogin, onRegister }) {
   // Bei Login: Token wird vom Parent gesetzt → Auto-Redirect.
   // Bei Registrieren: Erfolgsmeldung anzeigen + zurück auf Login-Tab.
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); //Verhindert das Seite neu lädt
     setError("");
     setSuccess("");
-    setLoading(true);
+    setLoading(true); //Anfrage läuft gerade
 
     try {
       if (isLogin) {
@@ -53,7 +53,7 @@ export default function AuthScreen({ onLogin, onRegister }) {
       // Backend-Fehlertext (z.B. "Benutzername bereits vergeben") anzeigen
       setError(err.message);
     } finally {
-      setLoading(false);
+      setLoading(false); //Anfrage endet
     }
   };
 
@@ -92,12 +92,12 @@ export default function AuthScreen({ onLogin, onRegister }) {
           display: "flex", marginBottom: 24, gap: 4,
           background: "var(--bg-primary)", borderRadius: "var(--radius-sm)", padding: 3,
         }}>
-          {["Anmelden", "Registrieren"].map((label, i) => {
+          {["Anmelden", "Registrieren"].map((label, i) => { // Geht beide Tab-Bezeichnungen durch und rendert für jede einen Button
             const active = i === 0 ? isLogin : !isLogin;
             return (
               <button key={label}
                 // Beim Tab-Wechsel auch Banner zurücksetzen, sonst bleiben alte Meldungen stehen
-                onClick={() => { setIsLogin(i === 0); setError(""); setSuccess(""); }}
+                onClick={() => { setIsLogin(i === 0); setError(""); setSuccess(""); }} //Was soll passieren wenn man drauf klickt
                 style={{
                   flex: 1, padding: "8px 0", borderRadius: "var(--radius-sm)",
                   border: "none", fontSize: "var(--fs-body)", fontWeight: 700, cursor: "pointer",
@@ -120,7 +120,7 @@ export default function AuthScreen({ onLogin, onRegister }) {
             <input
               value={username} onChange={(e) => setUsername(e.target.value)}
               placeholder="z.B. max123"
-              autoComplete="username"
+              autoComplete="username" //Gespeicherte usernamen können Vorgeschlagen werden
               style={{
                 width: "100%", padding: "11px 14px",
                 borderRadius: "var(--radius-sm)",
@@ -136,10 +136,12 @@ export default function AuthScreen({ onLogin, onRegister }) {
               Passwort
             </label>
             <input
+              //Eingabe wird versteckt angezeigt
+              //Wenn der Nutzer tippt, wird der neue Wert gespeichert
               type="password" value={password} onChange={(e) => setPassword(e.target.value)}
               placeholder="Mind. 4 Zeichen"
               // autoComplete-Hint für Browser-Passwortmanager (current vs new)
-              autoComplete={isLogin ? "current-password" : "new-password"}
+              autoComplete={isLogin ? "current-password" : "new-password"} //Aktuelles oder neues Passowrt?
               style={{
                 width: "100%", padding: "11px 14px",
                 borderRadius: "var(--radius-sm)",

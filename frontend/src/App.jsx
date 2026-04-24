@@ -13,7 +13,7 @@ import { useState, useEffect } from "react";
 import StartScreen from "./screens/StartScreen";
 import CodeScreen from "./screens/CodeScreen";
 import LearnScreen from "./screens/LearnScreen";
-import AuthScreen from "./components/AuthScreen";
+import AuthScreen from "./screens/AuthScreen";
 import useAuth from "./hooks/useAuth";
 
 export default function App() {
