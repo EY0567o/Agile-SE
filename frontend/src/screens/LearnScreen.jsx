@@ -49,9 +49,6 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   const [running, setRunning] = useState(false);
   // loaded=false → "wird geladen..." Splash; verhindert Flackern
   const [loaded, setLoaded] = useState(false);
-  // Steuert den ausklappbaren "💡 Konzept"-Block in der Aufgaben-Ansicht.
-  // Default closed → die Erklärung drängt sich nicht auf, ist aber 1 Klick weit weg.
-  const [conceptOpen, setConceptOpen] = useState(false);
 
   // ─── Fortschritt vom Backend laden (einmalig beim Mount) ───
   // Antwort-Form: { progress: [ { taskId, code, solved }, ... ] }
@@ -64,12 +61,15 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
         data.progress.forEach(p => {
           const idx = p.taskId - 1; // taskId ist 1-basiert, Array 0-basiert
           if (idx >= 0 && idx < newCodes.length) {
+            // Falls gespeicherter Code vorhanden ist, ersetzt er den Starter-Code:
             if (p.code) newCodes[idx] = p.code;
             // unlockedUpTo = höchste gelöste taskId (1-basiert ≙ index+1)
             if (p.solved) solved = Math.max(solved, p.taskId);
           }
         });
+        //Dadurch zeigt App richtige Codes an Starter/ Geseicherter Code
         setCodes(newCodes);
+        //User hat bis jetzt x aufgaben gelöst
         setUnlockedUpTo(solved);
       }
       setLoaded(true);
@@ -91,6 +91,7 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   const runCode = async () => {
     setRunning(true);
     setOutput(null);
+    //Welche Aufgabe | Inhalt
     saveProgress(selectedTask, codes[selectedTask]);
     try {
       const res = await apiFetch("/api/run", {
@@ -129,18 +130,14 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   const openTask = (index) => {
     setSelectedTask(index);
     setOutput(null);     // alte Ausgabe von vorheriger Aufgabe entfernen
-    setConceptOpen(false); // Konzept-Block beim Wechsel wieder schließen
   };
 
-  // markSolved: User klickt "Richtig gelöst" → speichern, animieren,
-  // freischalten (falls aktuell), zurück zum Pfad.
+  // markSolved: User klickt "Richtig gelöst"
     const markSolved = () => {
-    // Guard: während der Animation läuft, darf markSolved nicht
-    // erneut starten – sonst schaltet ein zweiter Klick auf den
-    // "✓ Weiter!"-Button eine zusätzliche Aufgabe frei.
     if (completedAnim) return;
     setCompletedAnim(true);
     saveProgress(selectedTask, codes[selectedTask], true);
+    //Nach 0,6 Sekunden wird die Gelöst-Animation beendet, der Lernpfad weiter freigeschaltet und zur Übersicht zurückgegangen.
     setTimeout(() => {
       setCompletedAnim(false);
       if (selectedTask === unlockedUpTo) {
@@ -163,6 +160,7 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
   }
 
   // ─── ANSICHT 1: Pfad-Ansicht (keine Aufgabe ausgewählt) ───
+  // Leiste
   if (selectedTask === null) {
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
@@ -297,8 +295,7 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           {/* Aufgaben-Balken direkt unter dem Header:
               - Links: Aufgaben-Titel (groß) + Beschreibung (klein, eine Zeile darunter)
-              - Rechts: "✓ Gelöst" / "Offen"-Marker + Konzept-Button mit 💡
-              Der Konzept-Button schaltet den ausklappbaren Erklär-Block darunter um. */}
+              - Rechts: "✓ Gelöst" / "Offen"-Marker */}
           <div style={{
             padding: "14px 22px",
             borderBottom: "1px solid var(--border)",
@@ -330,7 +327,7 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
               )}
             </div>
 
-            {/* Rechts: Gelöst-Status + Konzept-Button */}
+            {/* Rechts: Gelöst-Status */}
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
               <span style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
@@ -346,72 +343,8 @@ export default function LearnScreen({ onBack, theme, onToggleTheme, token }) {
                 {isCompleted ? "✓ Gelöst" : "Offen"}
               </span>
 
-              {task.explanation && (
-                <button
-                  onClick={() => setConceptOpen(!conceptOpen)}
-                  title={conceptOpen ? "Konzept ausblenden" : "Konzept anzeigen"}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    background: conceptOpen ? "var(--accent-glow)" : "transparent",
-                    border: `1px solid ${conceptOpen ? "var(--border-accent)" : "var(--border)"}`,
-                    color: conceptOpen ? "var(--accent)" : "var(--text-secondary)",
-                    fontSize: "var(--fs-caption)",
-                    padding: "5px 11px",
-                    borderRadius: "var(--radius-sm)",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    transition: "color 0.15s, border-color 0.15s, background 0.15s",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!conceptOpen) {
-                      e.currentTarget.style.color = "var(--accent)";
-                      e.currentTarget.style.borderColor = "var(--border-accent)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!conceptOpen) {
-                      e.currentTarget.style.color = "var(--text-secondary)";
-                      e.currentTarget.style.borderColor = "var(--border)";
-                    }
-                  }}
-                >
-                  <span>💡</span>
-                  <span>Konzept</span>
-                </button>
-              )}
             </div>
           </div>
-
-          {/* Ausklappbarer Konzept-Block: erscheint nur nach Klick auf 💡 Konzept.
-              Enthält die didaktische Erklärung (task.explanation), gut lesbar
-              gesetzt. Aufgabentext steht oben im Balken bereits sichtbar. */}
-          {conceptOpen && task.explanation && (
-            <div style={{
-              padding: "14px 22px 16px",
-              background: "var(--bg-primary)",
-              borderBottom: "1px solid var(--border)",
-              animation: "fadeIn 0.2s ease",
-            }}>
-              <div style={{
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                marginBottom: 6,
-              }}>
-                💡 Konzept
-              </div>
-              <p style={{
-                color: "var(--text-primary)",
-                fontSize: "var(--fs-body)",
-                margin: 0,
-                lineHeight: "var(--lh-copy)",
-              }}>
-                {task.explanation}
-              </p>
-            </div>
-          )}
 
           {/* Editor + Output-Panel */}
           <div style={{ flex: 1, padding: 14, display: "flex", flexDirection: "column", gap: 8, minHeight: 0 }}>
