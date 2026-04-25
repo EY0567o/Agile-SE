@@ -34,6 +34,11 @@ import bcrypt from "bcryptjs";
 import db from "./db.js";
 import TASKS from "../frontend/src/data/tasks.js"; // Lernaufgaben werden auch im Backend für KI-Kontext gebraucht
 import { VORLESUNGSFOLIEN } from "./data/vorlesungen.js";
+import {
+  extractClassName,
+  buildFallbackLearningSummary,
+  isUsefulLearningSummary,
+} from "./lib/helpers.js";
 
 // ─── Grund-Setup ─────────────────────────────────────────────────
 const app = express();
@@ -318,46 +323,8 @@ function getLearningProgress(userId) {
   return { solvedTasks, nextTask };
 }
 
-// Deterministische Zusammenfassung OHNE KI. Wird verwendet, wenn:
-//   - kein API-Key gesetzt ist, oder
-//   - die KI unsinn liefert (siehe isUsefulLearningSummary unten).
-// Garantiert, dass der User immer irgendeine sinnvolle Antwort bekommt.
-function buildFallbackLearningSummary({ solvedTasks, nextTask }) {
-  const practiced = solvedTasks.length > 0
-    ? `Du hast bereits Aufgaben zu ${solvedTasks.map((task) => task.title).join(", ")} bearbeitet. Damit hast du wichtige Java-Grundlagen schon geuebt und kannst vermutlich erste Konzepte selbst wiedererkennen.`
-    : "Du hast noch keine Aufgabe als geloest markiert. Sobald du die ersten Aufgaben bearbeitest, kann die App deinen Lernstand gezielter einschaetzen.";
-
-  const current = nextTask
-    ? `Im Moment passt als naechstes Thema ${nextTask.title}. Dabei geht es um: ${nextTask.description}`
-    : "Du hast alle Aufgaben im Lernpfad abgeschlossen. Jetzt kannst du dein Wissen im Trainingsraum an eigenen Beispielen festigen.";
-
-  const nextStep = nextTask
-    ? "Ein guter naechster Schritt ist, die Aufgabe erst selbst zu probieren und dir dann nur gezielte Hinweise zu holen."
-    : "Ein sinnvoller naechster Schritt ist, komplexere eigene Java-Beispiele zu schreiben und den Chat fuer Rueckfragen zu nutzen.";
-
-  return [
-    "Was du schon geuebt hast:", practiced, "",
-    "Woran du gerade arbeitest:", current, "",
-    "Naechster sinnvoller Schritt:", nextStep,
-  ].join("\n");
-}
-
-// Qualitäts-Check für die KI-Antwort. Die KI muss die drei Überschriften
-// enthalten und mindestens 120 Zeichen lang sein – sonst greift der Fallback.
-// Das ist eine einfache Halluzinations-Absicherung.
-function isUsefulLearningSummary(summary) {
-  if (!summary || typeof summary !== "string") return false;
-  const trimmed = summary.trim();
-  if (trimmed.length < 120) return false;
-
-  const normalized = trimmed.toLowerCase();
-  const headings = [
-    "was du schon ge",
-    "woran du gerade arbeitest",
-    "naechster sinnvoller schritt",
-  ];
-  return headings.every((heading) => normalized.includes(heading));
-}
+// Hinweis: buildFallbackLearningSummary und isUsefulLearningSummary
+// liegen jetzt in ./lib/helpers.js (testbar als reine Funktionen).
 
 // GET /api/learning-summary – liefert dem User eine Reflexion seines Lernstands
 // Rückgabe: { summary: "...", source: "ai" | "fallback" }
@@ -563,13 +530,8 @@ app.post("/api/run", auth, async (req, res) => {
     return res.status(400).json({ error: "code ist erforderlich" });
   }
 
-  // Klassennamen bestimmen. Reihenfolge:
-  //   1. public class Name  → Name
-  //   2. class Name         → Name
-  //   3. Fallback           → "Main"
-  const publicMatch = code.match(/public\s+class\s+(\w+)/);
-  const anyMatch = code.match(/class\s+(\w+)/);
-  const className = publicMatch?.[1] ?? anyMatch?.[1] ?? "Main";
+  // Klassennamen bestimmen (Logik ausgelagert nach lib/helpers.js, dort testbar).
+  const className = extractClassName(code);
 
   // Eindeutiger Temp-Ordner (UUID), damit parallele Requests sich
   // nicht in die Quere kommen.
