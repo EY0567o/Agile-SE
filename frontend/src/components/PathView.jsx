@@ -30,7 +30,9 @@ export default function PathView({ unlockedUpTo, onSelect }) {
       alignItems: "center",
       padding: "48px 24px 64px",
     }}>
-      {/* Pfad-Container: alle Knoten + Verbindungslinien */}
+      {/* Pfad-Container: alle Knoten + Verbindungslinien 
+      /Element | Index*/}
+      
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
         {TASKS.map((t, i) => {
           // Status pro Knoten berechnen

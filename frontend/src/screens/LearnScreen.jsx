@@ -27,7 +27,7 @@
 
 import { useState, useEffect } from "react";
 import CodeEditor from "../components/CodeEditor";
-import ChatPanel from "../components/ChatPanel";
+import ChatPanel from "../components/chat/ChatPanel";
 import ThemeToggle from "../components/ThemeToggle";
 import PathView from "../components/PathView";
 import TASKS from "../data/tasks";

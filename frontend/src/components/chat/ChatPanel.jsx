@@ -22,7 +22,7 @@
 import { useState, useEffect, useRef } from "react";
 import ChatBubble from "./ChatBubble";
 import QuickActions from "./QuickActions";
-import useApi from "../hooks/useApi";
+import useApi from "../../hooks/useApi";
 
 export default function ChatPanel({ code, greeting, token, taskId, taskTitle, taskDescription, taskHint, errorOutput }) {
   const apiFetch = useApi(token);
