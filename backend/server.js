@@ -38,6 +38,7 @@ import {
   extractClassName,
   buildFallbackLearningSummary,
   isUsefulLearningSummary,
+  createAuthMiddleware,
 } from "./lib/helpers.js";
 
 // ─── Grund-Setup ─────────────────────────────────────────────────
@@ -59,27 +60,11 @@ const openaiModel = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const sessions = new Map();
 
 // ─── Auth Middleware ─────────────────────────────────────────────
-// Wird VOR allen geschützten Endpoints ausgeführt. Prüft:
-//   1. Gibt es einen Authorization-Header im Format "Bearer <token>"?
-//   2. Existiert dieser Token in unserer sessions-Map?
-// Bei Erfolg: req.user = { userId, username } setzen → weiter mit next()
-// Bei Fehler: 401 zurückgeben → Frontend loggt den User aus
-
+// Wird VOR allen geschützten Endpoints ausgeführt.
+// Logik liegt in lib/helpers.js (testbar). Hier nur die Bindung an
+// unsere konkrete Sessions-Map.
 //Ist der User eingeloggt?
-//
-function auth(req, res, next) {
-  const header = req.headers.authorization;
-  if (!header?.startsWith("Bearer ")) {
-    return res.status(401).json({ error: "Nicht angemeldet" });
-  }
-  const token = header.slice(7); // "Bearer " abschneiden
-  const session = sessions.get(token);
-  if (!session) {
-    return res.status(401).json({ error: "Sitzung abgelaufen" });
-  }
-  req.user = session;
-  next();
-}
+const auth = createAuthMiddleware(sessions);
 
 // ─── Aufgaben-Titel (für KI-Kontext) ─────────────────────────────
 // Kurze Liste der Task-Titles, damit die KI im System-Prompt leicht

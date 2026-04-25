@@ -39,6 +39,30 @@ export function buildFallbackLearningSummary({ solvedTasks, nextTask }) {
   ].join("\n");
 }
 
+// Auth-Middleware-Factory.
+// Nimmt die Sessions-Map als Parameter rein, damit die Funktion isoliert
+// testbar bleibt (kein versteckter Zugriff auf globale State).
+//
+// Verhalten:
+//   - Kein "Bearer <token>"-Header           → 401 "Nicht angemeldet"
+//   - Token nicht in der Sessions-Map        → 401 "Sitzung abgelaufen"
+//   - Gueltig                                → req.user setzen + next()
+export function createAuthMiddleware(sessions) {
+  return function auth(req, res, next) {
+    const header = req.headers.authorization;
+    if (!header?.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "Nicht angemeldet" });
+    }
+    const token = header.slice(7);
+    const session = sessions.get(token);
+    if (!session) {
+      return res.status(401).json({ error: "Sitzung abgelaufen" });
+    }
+    req.user = session;
+    next();
+  };
+}
+
 // Qualitaets-Check fuer KI-Antworten beim Lernstands-Endpoint.
 // Greift, wenn die KI halluziniert oder das Format nicht einhaelt.
 export function isUsefulLearningSummary(summary) {

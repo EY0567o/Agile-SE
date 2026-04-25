@@ -10,12 +10,28 @@
 //   - isUsefulLearningSummary (Qualitaets-Check der KI-Antwort)
 // ══════════════════════════════════════════════════════════════════
 
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import {
   extractClassName,
   buildFallbackLearningSummary,
   isUsefulLearningSummary,
+  createAuthMiddleware,
 } from "./helpers.js";
+
+// Mini-Helper: simuliert Express' (req, res, next) fuer die Auth-Tests.
+// res.status(...).json(...) wird so gestaltet, dass wir spaeter pruefen
+// koennen, mit welchem Code und welchem Body geantwortet wurde.
+function makeReqResNext(headers = {}) {
+  const req = { headers };
+  const res = {
+    statusCode: null,
+    body: null,
+    status(code) { this.statusCode = code; return this; },
+    json(payload) { this.body = payload; return this; },
+  };
+  const next = vi.fn();
+  return { req, res, next };
+}
 
 describe("extractClassName", () => {
   test("findet 'public class Foo' und liefert 'Foo'", () => {
@@ -85,5 +101,37 @@ Naechster sinnvoller Schritt: Probier die Aufgabe selbststaendig und hol dir nur
   test("lehnt null und undefined ab", () => {
     expect(isUsefulLearningSummary(null)).toBe(false);
     expect(isUsefulLearningSummary(undefined)).toBe(false);
+  });
+});
+
+describe("createAuthMiddleware", () => {
+  test("ohne Authorization-Header → 401 'Nicht angemeldet'", () => {
+    const auth = createAuthMiddleware(new Map());
+    const { req, res, next } = makeReqResNext({});      // keine Header
+    auth(req, res, next);
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toEqual({ error: "Nicht angemeldet" });
+    expect(next).not.toHaveBeenCalled();                // darf NICHT durchgewinkt werden
+  });
+
+  test("mit unbekanntem Token → 401 'Sitzung abgelaufen'", () => {
+    const auth = createAuthMiddleware(new Map());       // leere Sessions
+    const { req, res, next } = makeReqResNext({ authorization: "Bearer fake-token-123" });
+    auth(req, res, next);
+    expect(res.statusCode).toBe(401);
+    expect(res.body).toEqual({ error: "Sitzung abgelaufen" });
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  test("mit gueltigem Token → req.user wird gesetzt + next() wird aufgerufen", () => {
+    const sessions = new Map([
+      ["valid-token", { userId: 42, username: "Max" }],
+    ]);
+    const auth = createAuthMiddleware(sessions);
+    const { req, res, next } = makeReqResNext({ authorization: "Bearer valid-token" });
+    auth(req, res, next);
+    expect(res.statusCode).toBeNull();                   // keine Fehlerantwort
+    expect(req.user).toEqual({ userId: 42, username: "Max" });
+    expect(next).toHaveBeenCalledOnce();                 // wurde durchgewinkt
   });
 });
