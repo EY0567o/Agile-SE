@@ -18,7 +18,7 @@ export default function ChatBubble({ role, text }) {
       // Ausrichtung: Bot links, User rechts
       justifyContent: isBot ? "flex-start" : "flex-end",
       marginBottom: 14,
-      animation: "slideUp 0.3s ease",
+      animation: "slideUp 0.6s ease",
     }}>
       <div style={{
         maxWidth: "88%",

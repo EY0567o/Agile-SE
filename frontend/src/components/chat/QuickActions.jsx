@@ -1,20 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  QuickActions.jsx – Schnellaktionen-Menü für den Chat
-// ═══════════════════════════════════════════════════════════════
-//  Klick auf den Blitz-Button öffnet ein Popup mit vordefinierten
-//  Prompts. Das spart dem Lernenden das Tippen häufiger Fragen
-//  ("Erkläre meinen Code", "Gib mir einen Hinweis", ...).
-//
-//  Technisch:
-//   - Dropdown mit Click-Outside-Close (useRef + document-Listener)
-//   - Prompts sind als ACTIONS-Konstante oben definiert → leicht
-//     erweiterbar durch das Team
-//
-//  Props:
-//   - onSelect(prompt) : wird mit dem gewählten Prompt-Text aufgerufen
-//   - disabled         : deaktiviert den Button während KI lädt
-// ═══════════════════════════════════════════════════════════════
-
 import { useState, useRef, useEffect } from "react";
 
 // Liste der Schnellaktionen. icon = kurzes Symbol für die Liste.
@@ -33,9 +16,7 @@ export default function QuickActions({ onSelect, disabled }) {
   // Ref auf die Wurzel des Popups – brauchen wir für Click-Outside
   const ref = useRef(null);
 
-  // Click-Outside-Handler: Wenn der User irgendwo AUSSERHALB des
-  // Popups klickt, schließen wir es. Listener wird beim Unmount
-  // wieder aufgeräumt (Memory-Leak vermeiden).
+  // Click-Outside-Handler: Wenn der User irgendwo AUSSERHALB des Popups klickt, schließen wir es.
   useEffect(() => {
     const handleClick = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -98,8 +79,8 @@ export default function QuickActions({ onSelect, disabled }) {
             <button
               key={action.label}
               onClick={() => {
-                onSelect(action);  // ganze Action statt nur prompt
-                setOpen(false);
+                onSelect(action);  // gibt die geklickte Schnellaktion an ChatPanel weiter.
+                setOpen(false);  //Menü wird geschlossen dannach
               }}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
