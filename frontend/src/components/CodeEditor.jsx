@@ -1,31 +1,12 @@
-// ═══════════════════════════════════════════════════════════════
-//  CodeEditor.jsx – Monaco-Editor Wrapper mit Java-Highlighting
-// ═══════════════════════════════════════════════════════════════
-//  Was macht diese Komponente?
-//   - Bindet den Monaco-Editor (gleiche Engine wie VS Code) ein
-//   - Java-Syntax-Highlighting out-of-the-box
-//   - Eigene Theme-Definition passend zum CodeBuddy-UI (Dark + Light)
-//   - Reagiert automatisch auf Theme-Wechsel via MutationObserver
-//   - Run-Button oben rechts (optional, nur wenn onRun gesetzt ist)
-//
-//  Wichtige Design-Entscheidung:
-//   Wir deaktivieren bewusst IDE-Features wie Auto-Vervollständigung,
-//   Minimap, Folding, Kontext-Menü. Lernende sollen Java-Syntax aktiv
-//   tippen und nicht aus Auto-Complete-Listen wählen. Das ist
-//   didaktisch gewollt – nicht ein "Versehen".
-// ═══════════════════════════════════════════════════════════════
-
 import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 
 // ─── Theme-Definitionen ─────────────────────────────────────────
-// Wir registrieren zwei eigene Monaco-Themes. Die Farben stimmen mit
-// den CSS-Variablen aus index.css überein, damit der Editor nahtlos
-// in das restliche UI übergeht (keine harten Kanten).
 function defineThemes(monaco) {
   // Dark-Theme (Standard)
   monaco.editor.defineTheme("codebuddy-dark", {
     base: "vs-dark",
+    //Alles was nicht definiert von Basis-Theme übernehmen
     inherit: true,
     rules: [
       { token: "keyword",    foreground: "7eb8d4", fontStyle: "bold" },
@@ -75,9 +56,7 @@ function defineThemes(monaco) {
 //   running     : True während Java ausgeführt wird (Button disabled)
 //   extraButton : optional ein zusätzlicher Button (z.B. "Richtig gelöst")
 export default function CodeEditor({ code, onChange, readOnly = false, onRun, running, extraButton }) {
-  // Theme-State holen wir direkt aus dem DOM (das Attribut wird in
-  // App.jsx gesetzt). So müssen wir es nicht durch die Prop-Kette
-  // reichen.
+  // In HTML wird es einfach genommen
   const [theme, setTheme] = useState(
     typeof document !== "undefined"
       ? document.documentElement.getAttribute("data-theme") || "dark"
@@ -119,6 +98,7 @@ export default function CodeEditor({ code, onChange, readOnly = false, onRun, ru
         width="100%"
         defaultLanguage="java"
         value={code}
+        //CodeEditor gibt den neuen Code nach oben weiter:
         onChange={(value) => onChange(value || "")}
         onMount={handleMount}
         theme={theme === "light" ? "codebuddy-light" : "codebuddy-dark"}

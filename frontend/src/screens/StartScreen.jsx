@@ -60,6 +60,7 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryText, setSummaryText] = useState("");
+  
   // "ai" = KI-Antwort, sonst automatisch aus dem Fortschritt erzeugt
   const [summarySource, setSummarySource] = useState("ai");
   const [summaryError, setSummaryError] = useState("");
@@ -117,7 +118,7 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
           position: "absolute",
           bottom: "-20%", right: "-10%",
           width: 600, height: 600, borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(74,222,128,0.04) 0%, transparent 60%)",
+          background: "radial-gradient(circle, rgba(165, 222, 74, 0.04) 0%, transparent 60%)",
         }} />
       </div>
 
@@ -221,7 +222,6 @@ export default function StartScreen({ onNavigate, theme, onToggleTheme, username
               {/* Profil-Dropdown (Abmelden / Konto löschen) */}
               {profileOpen && (
                 <>
-                  {/* Unsichtbares Overlay → Klick irgendwo schließt das Menü */}
                   <div onClick={() => setProfileOpen(false)} style={{
                     position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9,
                   }} />

@@ -40,7 +40,9 @@
   --lh-copy: 1.65;
   --tracking-tight: -0.4px;
   --tracking-title: -0.6px;
+  /*Normale Schrift*/
   --font-sans: "DM Sans", "Inter", "Segoe UI", system-ui, sans-serif;
+  /*Code-Schrift*/
   --font-mono: "JetBrains Mono", "Fira Code", "Courier New", monospace;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -103,6 +105,7 @@ weil manchmal ned mitkommt
 -Scrollbar Schienen sind unsichtbar
 -Bewegliche Teil andere Farbe
 -namen sind vordefiniert
+-Overflow: "auto"
 */
 ::-webkit-scrollbar {
   width: 5px;

@@ -1,24 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  ChatPanel.jsx – Kompletter Chat-Bereich (rechts neben Editor)
-// ═══════════════════════════════════════════════════════════════
-//  Features:
-//   - Nachrichtenverlauf als Liste von ChatBubbles
-//   - QuickActions-Menü (vordefinierte Prompts) links am Input
-//   - Auto-Scroll zum Ende bei neuer Nachricht
-//   - Schicken per Enter oder Button
-//   - Loading-Indikator ("CodeBuddy denkt nach...")
-//
-//  Wichtige Props:
-//   - code             : aktueller Java-Code im Editor (wird mitgeschickt)
-//   - greeting         : Begrüßungstext der ersten Bot-Nachricht
-//   - taskId/Title/Description/Hint : Aufgaben-Kontext (aus LearnScreen)
-//
-//  Besonderheit persist:
-//   Nachrichten mit persist:false (Begrüßung, Fehlermeldungen) werden
-//   NICHT in die API-History übernommen. Sonst würde die KI Fehler
-//   wie "Verbindungsfehler" als eigene frühere Antwort interpretieren.
-// ═══════════════════════════════════════════════════════════════
-
 import { useState, useEffect, useRef } from "react";
 import ChatBubble from "./ChatBubble";
 import QuickActions from "./QuickActions";
@@ -28,72 +7,67 @@ export default function ChatPanel({ code, greeting, token, taskId, taskTitle, ta
   const apiFetch = useApi(token);
 
   // Messages-State: erste Nachricht ist die Begrüßung (persist:false,
-  // damit sie nicht im KI-Kontext landet)
   const [messages, setMessages] = useState([
     { role: "bot", text: greeting, persist: false },
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Ref auf ein unsichtbares Div am Ende der Liste → scrollIntoView
-  // bei neuen Nachrichten für Auto-Scroll nach unten
+  // Der Code sorgt dafür, dass der Chat bei neuen Nachrichten automatisch nach unten scrollt.
   const chatEnd = useRef(null);
   useEffect(() => {
     chatEnd.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // sendMessage: Einheitliche Funktion für Tippen + QuickAction-Klick
-  //   overrideText: Wenn gesetzt (QuickAction), wird dieser Text statt
-  //                 des Input-Feldes verwendet
+
   const sendMessage = async (overrideText, isErrorAction = false) => {
-    // Spezialfall: "Fehlermeldung erklären" ohne aktuelle Fehlermeldung
-    // → lokal antworten, kein API-Call
-    if (isErrorAction && !errorOutput) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "user", text: "Fehlermeldung erklären", persist: false },
-        { role: "bot", text: "Keine Fehlermeldung vorhanden. Führe deinen Code erst aus – sobald ein Fehler auftritt, kann ich ihn dir erklären.", persist: false },
-      ]);
-      return;
-    }
+  if (isErrorAction && !errorOutput) {
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text: "Fehlermeldung erklären", persist: false },
+      { role: "bot", text: "Keine Fehlermeldung vorhanden. Führe deinen Code erst aus – sobald ein Fehler auftritt, kann ich ihn dir erklären.", persist: false },
+    ]);
+    return;
+  }
 
-    const userText = overrideText || input.trim();
-    if (!userText && !code) return;
-    let finalText = userText || "Erkläre meinen Code.";
+  const userText = overrideText || input.trim();
+  if (!userText && !code) return;
+  let finalText = userText || "Erkläre meinen Code.";
 
-    // Bei "Fehlermeldung erklären" die aktuelle Fehlermeldung anhängen,
-    // damit die KI sie im Klartext sieht.
-    if (isErrorAction && errorOutput) {
-      finalText += `\n\nHier ist die Fehlermeldung:\n\`\`\`\n${errorOutput}\n\`\`\``;
-    }
+  // Bei "Fehlermeldung erklären" die aktuelle Fehlermeldung anhängen,
+  // damit die KI sie im Klartext sieht.
+  if (isErrorAction && errorOutput) {
+    finalText += `\n\nHier ist die Fehlermeldung:\n\`\`\`\n${errorOutput}\n\`\`\``;
+  }
 
-    const newUserMsg = { role: "user", text: finalText };
-    setMessages((prev) => [...prev, newUserMsg]);
-    setInput("");
-    setLoading(true);
+  const newUserMsg = { role: "user", text: finalText };
+  //Neue Nachricht im Chat anzeigen
+  setMessages((prev) => [...prev, newUserMsg]);
+  setInput("");
+  setLoading(true);
 
-    const history = [...messages, newUserMsg]
-      .filter((m) => m.persist !== false)
-      .map((m) => ({
-        role: m.role === "bot" ? "assistant" : m.role,
-        content: m.text,
-      }));
+  const history = [...messages, newUserMsg]
+    .filter((m) => m.persist !== false)
+    .map((m) => ({
+      role: m.role === "bot" ? "assistant" : m.role,
+      content: m.text,
+    }));
 
-    try {
-      const res = await apiFetch("/api/chat", {
-        method: "POST",
-        body: JSON.stringify({ messages: history, code, taskId, taskTitle, taskDescription, taskHint }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Unbekannter Fehler");
-      setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
-    } catch (err) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text: err.message || "Verbindungsfehler – bitte versuche es erneut.", persist: false },
-      ]);
-    }
-    setLoading(false);
+  try {
+    const res = await apiFetch("/api/chat", {
+      method: "POST",
+      body: JSON.stringify({ messages: history, code, taskId, taskTitle, taskDescription, taskHint }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Unbekannter Fehler");
+    setMessages((prev) => [...prev, { role: "bot", text: data.reply }]);
+  } catch (err) {
+    setMessages((prev) => [
+      ...prev,
+      { role: "bot", text: err.message || "Verbindungsfehler – bitte versuche es erneut.", persist: false },
+    ]);
+  }
+  setLoading(false);
   };
 
   return (
