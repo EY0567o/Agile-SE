@@ -1,19 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  PathView.jsx – Lernpfad als vertikale Zickzack-Liste
-// ═══════════════════════════════════════════════════════════════
-//  Stellt alle 10 Aufgaben aus tasks.js untereinander dar – inspiriert
-//  von Duolingo's Lernpfad. Visuelle Logik:
-//   - Erledigte Aufgaben: grüner Haken, weichgezeichnet
-//   - Aktuelle Aufgabe (next): dezent hervorgehoben (Accent-Border)
-//   - Gesperrte Aufgaben: grau, mit 🔒, nicht klickbar
-//   - Zickzack: jede 2. Aufgabe ist horizontal versetzt (-60 / +60)
-//
-//  Props:
-//   - unlockedUpTo : Index der nächsten freigeschalteten Aufgabe
-//                    (kommt von /api/progress, persistiert pro User)
-//   - onSelect(idx): Callback beim Klick auf eine entsperrte Aufgabe
-// ═══════════════════════════════════════════════════════════════
-
 import { useState } from "react";
 import TASKS from "../data/tasks";
 

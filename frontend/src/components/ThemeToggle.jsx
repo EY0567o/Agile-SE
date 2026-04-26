@@ -1,15 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  ThemeToggle.jsx – Dark/Light Umschalter
-// ═══════════════════════════════════════════════════════════════
-//  Kleiner Button mit Sonnen-/Mond-Icon. Die eigentliche Theme-
-//  Logik liegt in App.jsx (via useState), diese Komponente ist nur
-//  der optische Trigger.
-//
-//  Props:
-//   - theme    : "dark" | "light" (aktueller Zustand)
-//   - onToggle : Callback beim Klick
-// ═══════════════════════════════════════════════════════════════
-
 export default function ThemeToggle({ theme, onToggle }) {
   return (
     <button

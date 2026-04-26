@@ -1,14 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-//  db.js – Datenbank-Setup (SQLite via better-sqlite3)
-// ─────────────────────────────────────────────────────────────
-//  Verantwortlich für:
-//   - Verbindung zur SQLite-Datei (codebuddy.db)
-//   - Anlegen der Tabellen beim ersten Start (CREATE IF NOT EXISTS)
-//
-//  Wird von server.js importiert: `import db from "./db.js";`
-//  Alle SQL-Queries laufen als db.prepare(...).run() / .get() / .all()
-// ─────────────────────────────────────────────────────────────
-
 import Database from "better-sqlite3";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url"; //DateiURL in Pfad

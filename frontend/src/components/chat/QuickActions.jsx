@@ -9,6 +9,7 @@ const ACTIONS = [
   { id: "concept", label: "Konzept erklären", icon: "📚", prompt: "Erkläre mir das Java-Konzept, das hinter der aktuellen Aufgabe steckt – allgemein und ohne direkten Bezug zu meiner Lösung. Kein Code, der die Aufgabe löst." },
 ];
 
+//onSelect: was wurde ausgewählt | disabled: wenn chat denkt, dann kann man nicht mehr das Menü anklicken
 export default function QuickActions({ onSelect, disabled }) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(null);

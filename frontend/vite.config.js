@@ -7,7 +7,8 @@ import { defineConfig } from "vite";
 //Damit kann ich Vite einstellen
 export default defineConfig({
   plugins: [react()],
-  //Wenn Datei geöfnnet werden, wird Vite benutzt
+  //API Aufruf an Backend weiterleiten
+  //Beispiel: wenn im frontend etwas mit "/api" kommt, dann macht vite draus "http://localhost:3001/api/login"
   server: {
     proxy: {
       "/api": "http://localhost:3001",
@@ -16,3 +17,5 @@ export default defineConfig({
 });
 
 
+//statt fetch("http://localhost:3001/api/login")
+//einfach fetch("/api/login")

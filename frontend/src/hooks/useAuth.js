@@ -31,9 +31,9 @@ export default function useAuth() {
   // den lokalen Token weg. Der `active`-Flag verhindert State-Updates
   // nach Unmount (wichtig bei React Strict Mode).
   useEffect(() => {
-    if (!token) return;
+    if (!token) return; //isLogedin dann false -> AuthScreen angezeigt
 
-    let active = true;
+    let active = true; //Alter Request soll späfer nix mehr ändern können
 
     fetch(`${API}/api/progress`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -52,13 +52,14 @@ export default function useAuth() {
   }, [token]);
 
   // Login: POST /api/login → Token zurück bekommen → in State + localStorage
-  const login = useCallback(async (user, pass) => {
+  // async-braucht Zeit, da server anfrage. 
+  const login = useCallback(async (user, pass) => { //useCallback, React merkt sich bei jedem rendern Login, damit nicht neu gerendert
     const res = await fetch(`${API}/api/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: user, password: pass }),
+      method: "POST", //Daten an Server schicken
+      headers: { "Content-Type": "application/json" }, //Sagen Server Daten sind JSON
+      body: JSON.stringify({ username: user, password: pass }), //Baue aus JS Daten JSON Text
     });
-    const data = await res.json();
+    const data = await res.json(); //Antwort vom Server wird wieder in ein JS Objekt umgewandelt
     if (!res.ok) throw new Error(data.error);
     localStorage.setItem("codebuddy_token", data.token);
     localStorage.setItem("codebuddy_username", data.username);

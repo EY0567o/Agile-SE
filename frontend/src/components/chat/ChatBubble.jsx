@@ -1,14 +1,3 @@
-// ═══════════════════════════════════════════════════════════════
-//  ChatBubble.jsx – Einzelne Nachricht im Chatverlauf
-// ═══════════════════════════════════════════════════════════════
-//  Stellt eine Chat-Nachricht dar. Unterscheidung:
-//   - Bot-Nachrichten     : links, Label "CodeBuddy", andere Form
-//   - User-Nachrichten    : rechts, keine Überschrift, Accent-Farbe
-//
-//  Die Form der Sprechblase wird über asymmetrische border-radius
-//  erzeugt (oben-spitze-Ecke zeigt Richtung des Absenders).
-// ═══════════════════════════════════════════════════════════════
-
 export default function ChatBubble({ role, text }) {
   const isBot = role === "bot";
 

@@ -1,21 +1,12 @@
 // ══════════════════════════════════════════════════════════════════
 //  server.js – CodeBuddy Backend (Express-API)
 // ══════════════════════════════════════════════════════════════════
-//  Dies ist das HERZ der Backend-Logik. Alle API-Anfragen des
-//  Frontends landen hier und werden in einem dieser Bereiche bearbeitet:
 //
 //   1) AUTH         – Registrierung, Login, Logout, Konto löschen
 //   2) PROGRESS     – Lernfortschritt laden und speichern
 //   3) CHAT         – KI-Anfragen an OpenAI
 //   4) LEARNING     – KI-generierte Lernstands-Zusammenfassung
 //   5) RUN          – Java-Code kompilieren und ausführen (javac/java)
-//
-//  Wichtige Design-Entscheidungen:
-//   - Sessions liegen im RAM (Map), nicht in der DB. Beim Neustart
-//     sind alle User ausgeloggt – für eine Lern-App völlig OK.
-//   - Passwörter werden mit bcrypt gehasht (niemals Klartext).
-//   - LLM-Anbindung: OpenAI (gpt-4o-mini als Default).
-//     Ohne API-Key antworten Chat-Endpoints mit 503.
 // ══════════════════════════════════════════════════════════════════
 
 //Node.js - Backend mit JS schreiben
