@@ -45,7 +45,7 @@ export default function ChatPanel({ code, greeting, token, taskId, taskTitle, ta
   // sendMessage: Einheitliche Funktion für Tippen + QuickAction-Klick
   //   overrideText: Wenn gesetzt (QuickAction), wird dieser Text statt
   //                 des Input-Feldes verwendet
-    const sendMessage = async (overrideText, isErrorAction = false) => {
+  const sendMessage = async (overrideText, isErrorAction = false) => {
     // Spezialfall: "Fehlermeldung erklären" ohne aktuelle Fehlermeldung
     // → lokal antworten, kein API-Call
     if (isErrorAction && !errorOutput) {
